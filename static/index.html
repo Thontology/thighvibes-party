@@ -833,6 +833,28 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
+            <el-tooltip :content="t('homeAssistant')" placement="top">
+              <el-button
+                @click="HASettings.enabled = !HASettings.enabled; changeHAEnabled();"
+                class="icon-btn homeAssistant-btn"
+                :type="HASettings.enabled ? 'primary' : 'default'"
+                v-if="!isBtnCollapse"
+                circle>
+                <i class="fa-solid fa-house"></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('browserControl')" placement="top">
+              <el-button
+                @click="chromeMCPSettings.enabled = !chromeMCPSettings.enabled; changeChromeMCPEnabled();"
+                class="icon-btn browserControl-btn"
+                :type="chromeMCPSettings.enabled ? 'primary' : 'default'"
+                v-if="!isBtnCollapse"
+                circle>
+                <i class="fa-brands fa-chrome"></i>
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip :content="t('agentSnapshot')" placement="top">
               <el-button
                 @click="showAgentDialog = true"

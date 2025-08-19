@@ -227,7 +227,7 @@ let idleAnimationAction = null;
 let isLoadingAnimations = false;
 let idleAnimationManager = null; // 新的闲置动画管理器
 let defaultPoseAction = null; // 默认姿势动作
-let useVRMAIdleAnimations = false;
+let useVRMAIdleAnimations = true; // 是否使用VRM-A的闲置动画
 let isIdleAnimationModeChanging = false; // 防止重复切换
 
 
@@ -512,7 +512,10 @@ class IdleAnimationManager {
         this.playVRMAAnimation(animation);
         
         // 更新索引（循环）
-        this.currentIndex = (this.currentIndex + 1) % this.animationQueue.length;
+        //  this.currentIndex = (this.currentIndex + 1) % this.animationQueue.length;
+
+        //  更新索引（随机）
+        this.currentIndex = Math.floor(Math.random() * this.animationQueue.length);
     }
     
     // 播放指定的VRMA动画 - 改进版本
@@ -1152,7 +1155,7 @@ function createBreathClip(vrm) {
     // 呼吸缩放动画
     const scaleValues = [];
     times.forEach(time => {
-        const breathScale = 1 + Math.sin(time * Math.PI / 2) * 0.003; // 更自然的呼吸节奏
+        const breathScale = 1 + Math.sin(time * Math.PI / 2) * 0.006; // 更自然的呼吸节奏
         scaleValues.push(breathScale, breathScale, breathScale);
     });
     
