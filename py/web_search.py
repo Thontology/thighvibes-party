@@ -3,7 +3,7 @@ import json
 import os
 import time
 from bs4 import BeautifulSoup
-from langchain_community.tools import DuckDuckGoSearchResults
+from ddgs import DDGS
 import requests
 from tavily import TavilyClient
 from py.get_setting import load_settings
@@ -13,8 +13,7 @@ async def DDGsearch_async(query):
     def sync_search():
         max_results = settings['webSearch']['duckduckgo_max_results'] or 10
         try:
-            dds = DuckDuckGoSearchResults(num_results=max_results,output_format="json")
-            results = dds.invoke(query)
+            results = results = DDGS().text(query, max_results=max_results)
             return results
         except Exception as e:
             print(f"An error occurred: {e}")
