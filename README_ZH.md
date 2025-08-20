@@ -20,7 +20,7 @@
 
 ### 🚀 **一款拥有无限可能的3D版AI桌面伴侣！**
 
-- ✅ 无缝能力增强：无需代码改造即可实现LLM API企业级升级，为现有模型接口无缝集成知识库、实时联网、永久记忆、代码执行、多模态能力（视觉/绘图/听觉/语音）、深度思考控制与研究等模块化功能，打造可插拔的LLM增强中台。
+- ✅ 无缝能力增强：无需代码改造即可实现LLM API企业级升级，为现有模型接口无缝集成知识库、实时联网、永久记忆、代码执行、多模态能力（视觉/绘图/听觉/语音）、自动化能力（控制智能家居、控制浏览器）、深度思考控制与研究等模块化功能，打造可插拔的LLM增强中台。
 
 - ✅ 全渠道一键部署：支持将智能体配置快速部署至多类终端，已兼容经典聊天界面、微信/QQ官方机器人、B站直播互动、VRM虚拟桌宠等场景，开箱即用。
 
@@ -38,7 +38,7 @@
 ![image](doc/image/model.jpeg)
 
 ### 海量工具：支持异步调用，不阻塞智能体回复
-![image](doc/image/tool.jpeg)
+![image](doc/image/HA.jpeg)
 
 ### VRM桌宠：支持上传自定义VRM模型，打造专属桌面伴侣
 ![image](doc/image/vrmbot.jpeg)
@@ -62,13 +62,17 @@
 
 ### windows桌面版安装
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.4/Super-Agent-Party-Setup-0.2.4.exe)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-Setup-0.2.5.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
 
+### windows整合包（免安装源码版本）
+
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/super-agent-party-v0.2.5.zip)
+
 ### MacOS桌面版安装（beta测试）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.4/Super-Agent-Party-0.2.4-Mac.dmg)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Mac.dmg)
 
 ⭐注意！下载后将dmg文件的app文件拖入`/Applications`目录下，然后打开终端，执行以下命令并输入root密码，从而移除从网络下载附加的Quarantine属性：
 
@@ -84,11 +88,11 @@
 
 `.AppImage` 是一种无需安装、即开即用的 Linux 应用格式。适用于大多数 Linux 发行版。
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.4/Super-Agent-Party-0.2.4-Linux.AppImage)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.AppImage)
 
 #### 2. 使用 `.deb` 包安装（适用于 Ubuntu / Debian 系统）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.4/Super-Agent-Party-0.2.4-Linux.deb)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.deb)
 
 ### docker部署（推荐）
 
