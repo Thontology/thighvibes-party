@@ -110,16 +110,32 @@ async def lifespan(app: FastAPI):
     from tzlocal import get_localzone
     local_timezone = get_localzone()
     settings = await load_settings()
+    vendor = 'OpenAI'
+    for modelProvider in settings['modelProviders']: 
+        if modelProvider['id'] == settings['selectedProvider']:
+            vendor = modelProvider['vendor']
+            break
+    client_class = AsyncOpenAI
+    if vendor == 'Dify':
+        client_class = DifyOpenAIAsync
+    reasoner_vendor = 'OpenAI'
+    for modelProvider in settings['modelProviders']: 
+        if modelProvider['id'] == settings['reasoner']['selectedProvider']:
+            reasoner_vendor = modelProvider['vendor']
+            break
+    reasoner_client_class = AsyncOpenAI
+    if reasoner_vendor == 'Dify':
+        reasoner_client_class = DifyOpenAIAsync
     if settings:
-        client = AsyncOpenAI(api_key=settings['api_key'], base_url=settings['base_url'])
-        reasoner_client = AsyncOpenAI(api_key=settings['reasoner']['api_key'], base_url=settings['reasoner']['base_url'])
+        client = client_class(api_key=settings['api_key'], base_url=settings['base_url'])
+        reasoner_client = reasoner_client_class(api_key=settings['reasoner']['api_key'], base_url=settings['reasoner']['base_url'])
         if settings["systemSettings"]["proxy"]:
             # 设置代理环境变量
             os.environ['http_proxy'] = settings["systemSettings"]["proxy"].strip()
             os.environ['https_proxy'] = settings["systemSettings"]["proxy"].strip()
     else:
-        client = AsyncOpenAI()
-        reasoner_client = AsyncOpenAI()
+        client = client_class()
+        reasoner_client = reasoner_client_class()
     mcp_init_tasks = []
 
     async def init_mcp_with_timeout(server_name, server_config):

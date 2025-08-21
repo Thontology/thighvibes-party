@@ -4398,6 +4398,8 @@ let vue_methods = {
       // 匹配markdown中的链接,[]()，并替换为空字符串
       buffer = buffer.replace(/!\[.*?\]\(.*?\)/g, '');
       buffer = buffer.replace(/\[.*?\]\(.*?\)/g, '');
+      // HTML标签替换为空字符串
+      buffer = buffer.replace(/<[^>]*>/g, '');
 
       if (!buffer || buffer.trim() === '') {
         return { chunks: [], remaining: buffer };
