@@ -5348,7 +5348,8 @@ let vue_methods = {
   // 处理弹幕队列
   async processDanmuQueue() {
     try {
-      if(this.TTSrunning){
+      console.log(this.danmu);
+      if(this.TTSrunning && this.ttsSettings.enabled){
         if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
           console.log('All audio chunks played');
           lastMessage.currentChunk = 0;
@@ -5367,11 +5368,11 @@ let vue_methods = {
       if (!this.isLiveRunning || 
           this.danmu.length === 0 || 
           this.isTyping || 
-          this.TTSrunning || 
+          (this.TTSrunning && this.ttsSettings.enabled) || 
           this.isProcessingDanmu) {
         return;
       }
-
+      console.log('弹幕队列处理中');
       // 设置处理标志，防止并发处理
       this.isProcessingDanmu = true;
       
@@ -5478,7 +5479,7 @@ let vue_methods = {
         })
       };
       if (this.liveConfig.onlyDanmaku){
-        if (danmuItem.type === "danmu" || danmuItem.type === "super_chat") {
+        if (danmuItem.type === "danmaku" || danmuItem.type === "super_chat") {
           this.danmu.unshift(danmuItem);
         } 
       }else {
