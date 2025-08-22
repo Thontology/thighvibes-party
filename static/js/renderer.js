@@ -200,10 +200,10 @@ const app = Vue.createApp({
                 return this.liveConfig.bilibili_room_id && this.liveConfig.bilibili_room_id.trim() !== '';
             }
             else if(this.liveConfig.bilibili_type === 'open_live'){
-                return this.liveConfig.bilibili_ACCESS_KEY_ID &&
-                this.liveConfig.bilibili_SECRET_ACCESS_KEY &&
-                this.liveConfig.bilibili_APP_ID &&
-                this.liveConfig.bilibili_ROOM_OWNER_AUTH_CODE;
+                return this.liveConfig.bilibili_ACCESS_KEY_ID !== '' &&
+                this.liveConfig.bilibili_SECRET_ACCESS_KEY !== '' &&
+                this.liveConfig.bilibili_APP_ID !== '' &&
+                this.liveConfig.bilibili_ROOM_OWNER_AUTH_CODE !== '';
             }
         }
         return false;
