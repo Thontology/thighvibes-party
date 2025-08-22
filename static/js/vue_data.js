@@ -448,7 +448,16 @@ let vue_data = {
       windowWidth: 540,
       windowHeight: 960,
       defaultModels: [], // 存储默认模型
-      userModels: []     // 存储用户上传的模型
+      userModels: [],     // 存储用户上传的模型
+      defaultMotions: [], // 存储默认动作
+      userMotions: [],     // 存储用户上传的动作
+      selectedMotionIds: []
+    },
+    showVrmaMotionDialog: false,
+    newVrmaMotion: {
+      name: '',
+      displayName: '',
+      file: null
     },
     expressionMap : [
       '<happy>', 
