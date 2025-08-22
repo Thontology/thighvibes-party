@@ -2009,7 +2009,8 @@ let vue_methods = {
         'Ollama': this.isdocker ? 'http://host.docker.internal:11434/v1' : 'http://127.0.0.1:11434/v1',
         'Vllm': 'http://127.0.0.1:8000/v1',
         'LMstudio': 'http://127.0.0.1:1234/v1',
-        'xinference': 'http://localhost:9997/v1',
+        'xinference': 'http://127.0.0.1:9997/v1',
+        'Dify': 'http://127.0.0.1/v1',
         'Gemini': 'https://generativelanguage.googleapis.com/v1beta/openai',
         'Anthropic': 'https://api.anthropic.com/v1',
         'Grok': 'https://api.groq.com/openai/v1',
@@ -2054,6 +2055,9 @@ let vue_methods = {
       }
       if (value === 'xinference') {
         this.newProviderTemp.apiKey = 'xinference'
+      }
+      if (value === 'Dify') {
+        this.newProviderTemp.modelId = 'dify'
       }
     },
     // rerank供应商
@@ -4394,6 +4398,8 @@ let vue_methods = {
       // 匹配markdown中的链接,[]()，并替换为空字符串
       buffer = buffer.replace(/!\[.*?\]\(.*?\)/g, '');
       buffer = buffer.replace(/\[.*?\]\(.*?\)/g, '');
+      // HTML标签替换为空字符串
+      buffer = buffer.replace(/<[^>]*>/g, '');
 
       if (!buffer || buffer.trim() === '') {
         return { chunks: [], remaining: buffer };
@@ -5342,7 +5348,8 @@ let vue_methods = {
   // 处理弹幕队列
   async processDanmuQueue() {
     try {
-      if(this.TTSrunning){
+      console.log(this.danmu);
+      if(this.TTSrunning && this.ttsSettings.enabled){
         if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
           console.log('All audio chunks played');
           lastMessage.currentChunk = 0;
@@ -5361,11 +5368,11 @@ let vue_methods = {
       if (!this.isLiveRunning || 
           this.danmu.length === 0 || 
           this.isTyping || 
-          this.TTSrunning || 
+          (this.TTSrunning && this.ttsSettings.enabled) || 
           this.isProcessingDanmu) {
         return;
       }
-
+      console.log('弹幕队列处理中');
       // 设置处理标志，防止并发处理
       this.isProcessingDanmu = true;
       
@@ -5472,7 +5479,7 @@ let vue_methods = {
         })
       };
       if (this.liveConfig.onlyDanmaku){
-        if (danmuItem.type === "danmu" || danmuItem.type === "super_chat") {
+        if (danmuItem.type === "danmaku" || danmuItem.type === "super_chat") {
           this.danmu.unshift(danmuItem);
         } 
       }else {

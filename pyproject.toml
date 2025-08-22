@@ -53,4 +53,5 @@ dependencies = [
     "httpcore>=1.0.9",
     "httpx>=0.28.1",
     "ddgs>=9.5.4",
+    "dify-client-python>=1.0.1",
 ]

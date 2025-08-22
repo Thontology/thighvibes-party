@@ -51,6 +51,7 @@ from concurrent.futures import ThreadPoolExecutor
 import argparse
 from mem0 import Memory
 from py.qq_bot_manager import QQBotManager
+from py.dify_openai_async import DifyOpenAIAsync
 # 如果是windows系统
 if os.name == 'nt':
     from py.wx_bot_manager import WXBotManager
@@ -109,16 +110,32 @@ async def lifespan(app: FastAPI):
     from tzlocal import get_localzone
     local_timezone = get_localzone()
     settings = await load_settings()
+    vendor = 'OpenAI'
+    for modelProvider in settings['modelProviders']: 
+        if modelProvider['id'] == settings['selectedProvider']:
+            vendor = modelProvider['vendor']
+            break
+    client_class = AsyncOpenAI
+    if vendor == 'Dify':
+        client_class = DifyOpenAIAsync
+    reasoner_vendor = 'OpenAI'
+    for modelProvider in settings['modelProviders']: 
+        if modelProvider['id'] == settings['reasoner']['selectedProvider']:
+            reasoner_vendor = modelProvider['vendor']
+            break
+    reasoner_client_class = AsyncOpenAI
+    if reasoner_vendor == 'Dify':
+        reasoner_client_class = DifyOpenAIAsync
     if settings:
-        client = AsyncOpenAI(api_key=settings['api_key'], base_url=settings['base_url'])
-        reasoner_client = AsyncOpenAI(api_key=settings['reasoner']['api_key'], base_url=settings['reasoner']['base_url'])
+        client = client_class(api_key=settings['api_key'], base_url=settings['base_url'])
+        reasoner_client = reasoner_client_class(api_key=settings['reasoner']['api_key'], base_url=settings['reasoner']['base_url'])
         if settings["systemSettings"]["proxy"]:
             # 设置代理环境变量
             os.environ['http_proxy'] = settings["systemSettings"]["proxy"].strip()
             os.environ['https_proxy'] = settings["systemSettings"]["proxy"].strip()
     else:
-        client = AsyncOpenAI()
-        reasoner_client = AsyncOpenAI()
+        client = client_class()
+        reasoner_client = reasoner_client_class()
     mcp_init_tasks = []
 
     async def init_mcp_with_timeout(server_name, server_config):
@@ -3199,16 +3216,32 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
     async_tools_id = request.asyncToolsID or None
     if model == 'super-model':
         current_settings = await load_settings()
+        vendor = 'OpenAI'
+        for modelProvider in current_settings['modelProviders']: 
+            if modelProvider['id'] == current_settings['selectedProvider']:
+                vendor = modelProvider['vendor']
+                break
+        client_class = AsyncOpenAI
+        if vendor == 'Dify':
+            client_class = DifyOpenAIAsync
+        reasoner_vendor = 'OpenAI'
+        for modelProvider in current_settings['modelProviders']: 
+            if modelProvider['id'] == current_settings['reasoner']['selectedProvider']:
+                reasoner_vendor = modelProvider['vendor']
+                break
+        reasoner_client_class = AsyncOpenAI
+        if reasoner_vendor == 'Dify':
+            reasoner_client_class = DifyOpenAIAsync
         # 动态更新客户端配置
         if (current_settings['api_key'] != settings['api_key'] 
             or current_settings['base_url'] != settings['base_url']):
-            client = AsyncOpenAI(
+            client = client_class(
                 api_key=current_settings['api_key'],
                 base_url=current_settings['base_url'] or "https://api.openai.com/v1",
             )
         if (current_settings['reasoner']['api_key'] != settings['reasoner']['api_key'] 
             or current_settings['reasoner']['base_url'] != settings['reasoner']['base_url']):
-            reasoner_client = AsyncOpenAI(
+            reasoner_client = reasoner_client_class(
                 api_key=current_settings['reasoner']['api_key'],
                 base_url=current_settings['reasoner']['base_url'] or "https://api.openai.com/v1",
             )
@@ -3255,11 +3288,27 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
                     request.messages[0]['content'] = agentSettings['system_prompt'] + "\n\n" + request.messages[0]['content']
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': agentSettings['system_prompt']})
-        agent_client = AsyncOpenAI(
+        vendor = 'OpenAI'
+        for modelProvider in agent_settings['modelProviders']: 
+            if modelProvider['id'] == agent_settings['selectedProvider']:
+                vendor = modelProvider['vendor']
+                break
+        client_class = AsyncOpenAI
+        if vendor == 'Dify':
+            client_class = DifyOpenAIAsync
+        reasoner_vendor = 'OpenAI'
+        for modelProvider in agent_settings['modelProviders']: 
+            if modelProvider['id'] == agent_settings['reasoner']['selectedProvider']:
+                reasoner_vendor = modelProvider['vendor']
+                break
+        reasoner_client_class = AsyncOpenAI
+        if reasoner_vendor == 'Dify':
+            reasoner_client_class = DifyOpenAIAsync
+        agent_client = client_class(
             api_key=agent_settings['api_key'],
             base_url=agent_settings['base_url'] or "https://api.openai.com/v1",
         )
-        agent_reasoner_client = AsyncOpenAI(
+        agent_reasoner_client = reasoner_client_class(
             api_key=agent_settings['reasoner']['api_key'],
             base_url=agent_settings['reasoner']['base_url'] or "https://api.openai.com/v1",
         )
