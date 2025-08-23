@@ -1073,6 +1073,7 @@ let vue_methods = {
           // 初始化时确保数据一致性
           this.edgettsLanguage = this.ttsSettings.edgettsLanguage;
           this.edgettsGender = this.ttsSettings.edgettsGender;
+          this.handleSystemLanguageChange(this.systemSettings.language);
           if (this.HASettings.enabled) {
             this.changeHAEnabled();
           };
@@ -2503,8 +2504,13 @@ let vue_methods = {
       return this.translations[this.currentLanguage][key] || key;
     },
     async handleSystemLanguageChange(val) {
-      this.currentLanguage = val;
       this.systemSettings.language = val;
+      if (val === 'auto') {
+        // 获取系统设置，默认是'en-US'，如果系统语言是中文，则设置为'zh-CN'
+        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
+        val = systemLanguage.startsWith('zh') ? 'zh-CN' : 'en-US';
+      }
+      this.currentLanguage = val; // 更新当前语言
       await this.autoSaveSettings();
       this.$forceUpdate();
     },

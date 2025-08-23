@@ -315,7 +315,7 @@ let vue_data = {
     },
     newKbFiles: [],
     systemSettings: {
-      language: 'zh-CN',
+      language: 'auto',
       theme: 'light',
       network:"local",
       proxy: '',
@@ -1136,6 +1136,7 @@ let vue_data = {
       modelId: ''
     },
     systemlanguageOptions:[
+      { value: 'auto', label: 'auto' }, 
       { value: 'zh-CN', label: '中文' }, 
       { value: 'en-US', label: 'English' },
     ],

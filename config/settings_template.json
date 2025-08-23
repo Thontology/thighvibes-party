@@ -14,7 +14,7 @@
     "reasoning_effort": null,
     "extra_params":[],
     "systemSettings": {
-      "language": "zh-CN",
+      "language": "auto",
       "theme": "light",
       "network":"local",
       "proxy": ""
