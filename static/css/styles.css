@@ -3155,10 +3155,3 @@ body {
 .tts-controls .el-button {
   margin: 0; /* 移除默认边距 */
 }
-
-.model-option-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}

@@ -57,7 +57,9 @@ async function fetchVRMConfig() {
             enabledExpressions: false,
             selectedModelId: 'alice', // 默认选择Alice模型
             defaultModels: [], // 存储默认模型
-            userModels: []     // 存储用户上传的模型
+            userModels: [],     // 存储用户上传的模型
+            defaultMotions: [], // 存储默认动作
+            userMotions: []     // 存储用户上传的动作
         };
     }
 }
@@ -862,28 +864,40 @@ async function updateIdleAnimationButton() {
 
 // 获取动画目录下的所有VRMA文件
 async function getAnimationFiles() {
-    try {
-        const animationDir = `${window.location.protocol}//${window.location.host}/vrm/animations/`;
-        
-        // 这里需要一个API来获取目录下的文件列表
-        // 你可能需要在后端添加一个接口来返回动画文件列表
-        const response = await fetch(`${window.location.protocol}//${window.location.host}/api/animation-files`);
-        
-        if (response.ok) {
-            const files = await response.json();
-            return files.filter(file => file.endsWith('.vrma')).map(file => `${animationDir}${file}`);
-        } else {
-            // 如果没有API，使用预定义的文件列表
-            return [
-                `${animationDir}test.vrma`,
-                // 添加更多已知的动画文件
-            ];
-        }
-    } catch (error) {
-        console.error('Error getting animation files:', error);
-        // 返回默认动画文件
-        return [`${window.location.protocol}//${window.location.host}/vrm/animations/test.vrma`];
+  try {
+    // 1. 获取当前桌宠配置
+    const cfg = await fetchVRMConfig();   // { selectedMotionIds:[...], defaultMotions:[...], userMotions:[...] }
+
+    // 2. 把两个数组合并成“动作池”
+    const motionPool = [...cfg.defaultMotions, ...cfg.userMotions];
+
+    // 3. 取出被选中的动作，并转成可访问的完整 URL
+    const urls = cfg.selectedMotionIds
+      .map(id => motionPool.find(m => m.id === id)) // 找到对应条目
+      .filter(Boolean)                              // 过滤不存在的 id
+      .map(item => {
+        // 构造绝对 URL（同 VRM 模型做法）
+        const urlObj = new URL(item.path);
+        urlObj.protocol = window.location.protocol;
+        urlObj.host     = window.location.host;
+        return urlObj.toString();
+      });
+
+    // 4. 如果没有任何选中，给个兜底
+    if (urls.length === 0) {
+      const fallback = `${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`;
+      console.warn('没有选中任何动作，使用兜底动画');
+      return [fallback];
     }
+
+    console.log('本次要加载的 VRMA：', urls);
+    return urls;
+
+  } catch (err) {
+    console.error('获取动画列表失败：', err);
+    // 兜底
+    return [`${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`];
+  }
 }
 
 // 加载VRMA动画文件

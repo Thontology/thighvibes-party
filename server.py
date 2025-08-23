@@ -4697,18 +4697,163 @@ async def delete_vrm_model(filename: str):
             content={"success": False, "message": f"删除失败: {str(e)}"}
         )
 
-@app.get("/api/animation-files", response_model=list[str])
-async def get_animation_files():
-    animation_dir =  os.path.join(DEFAULT_VRM_DIR, "animations")
-    try:
-        files = []
-        if os.path.exists(animation_dir):
-            for file in os.listdir(animation_dir):
-                if file.endswith('.vrma'):
-                    files.append(file)
+ALLOWED_VRMA_EXTENSIONS = {"vrma"}
+
+animation_dir = os.path.join(DEFAULT_VRM_DIR, "animations")
+
+def make_file_url(request: Request, file_path: str) -> str:
+    """将本地文件路径转成对外可访问的 URL"""
+    return str(request.base_url) + file_path.lstrip("/")
+
+
+def scan_motion_files(directory: str, allowed_ext: set) -> List[dict]:
+    """
+    扫描指定目录下所有符合扩展名的文件，返回列表：
+    [
+      {
+        "id": "文件名(不含扩展名)",
+        "name": "文件名(不含扩展名)",
+        "path": "对外可访问的完整 URL",
+        "type": "default" | "user"
+      }
+    ]
+    """
+    files = []
+    if not os.path.exists(directory):
         return files
+
+    for f in os.listdir(directory):
+        if f.lower().endswith(tuple(allowed_ext)):
+            file_id = Path(f).stem
+            file_path = os.path.join(directory, f)
+            # 注意：这里统一返回相对路径，后面再组装成 URL
+            files.append({
+                "id": file_id,
+                "name": file_id,
+                "path": file_path,
+                "type": "default" if directory == animation_dir else "user"
+            })
+    # 按文件名排序
+    files.sort(key=lambda x: x["name"])
+    return files
+
+@app.get("/get_default_vrma_motions")
+async def get_default_vrma_motions(request: Request):
+    try:
+        motions = scan_motion_files(animation_dir, ALLOWED_VRMA_EXTENSIONS)
+
+        # 把磁盘路径转成 URL
+        for m in motions:
+            file_name = os.path.basename(m["path"])
+            m["path"] = str(request.base_url) + f"vrm/animations/{file_name}"
+
+        return {"success": True, "motions": motions}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error retrieving animation files")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"获取默认动作失败: {str(e)}"}
+        )
+
+
+@app.get("/get_user_vrma_motions")
+async def get_user_vrma_motions(request: Request):
+    try:
+        motions = scan_motion_files(UPLOAD_FILES_DIR, ALLOWED_VRMA_EXTENSIONS)
+
+        # 把磁盘路径转成 URL
+        for m in motions:
+            file_name = os.path.basename(m["path"])
+            m["path"] = str(request.base_url) + f"uploaded_files/{file_name}"
+
+        return {"success": True, "motions": motions}
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"获取用户动作失败: {str(e)}"}
+        )
+
+
+@app.post("/upload_vrma_motion")
+async def upload_vrma_motion(
+    request: Request,
+    file: UploadFile = File(...),
+    display_name: str = Form(...)
+):
+    # 检查扩展名
+    file_extension = Path(file.filename).suffix.lower().lstrip(".")
+    if file_extension not in ALLOWED_VRMA_EXTENSIONS:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": f"不支持的文件类型: {file_extension}"}
+        )
+
+    # 生成唯一文件名
+    unique_filename = f"{uuid.uuid4()}.vrma"
+    destination = os.path.join(UPLOAD_FILES_DIR, unique_filename)
+
+    try:
+        # 保存文件
+        os.makedirs(UPLOAD_FILES_DIR, exist_ok=True)
+        with open(destination, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+
+        # 构建返回数据
+        file_url = make_file_url(request, f"uploaded_files/{unique_filename}")
+
+        return JSONResponse(content={
+            "success": True,
+            "message": "动作上传成功",
+            "file": {
+                "unique_filename": unique_filename,
+                "display_name": display_name,
+                "path": file_url
+            }
+        })
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"保存文件失败: {str(e)}"}
+        )
+
+
+@app.delete("/delete_vrma_motion/{filename}")
+async def delete_vrma_motion(filename: str):
+    try:
+        # 只允许删除 UPLOAD_FILES_DIR 中的文件
+        if not re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.vrma$", filename):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Invalid filename"}
+            )
+
+        file_path = os.path.join(UPLOAD_FILES_DIR, filename)
+        abs_upload = os.path.abspath(UPLOAD_FILES_DIR)
+        abs_file = os.path.abspath(file_path)
+
+        if not abs_file.startswith(abs_upload):
+            return JSONResponse(
+                status_code=403,
+                content={"success": False, "message": "禁止删除系统文件"}
+            )
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return {"success": True, "message": "动作文件已删除"}
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "文件不存在"}
+            )
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"删除失败: {str(e)}"}
+        )
 
 @app.get("/update_storage")
 async def update_storage_endpoint(request: Request):

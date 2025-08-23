@@ -233,7 +233,10 @@
       "windowWidth": 540,
       "windowHeight": 960,
       "defaultModels": [], 
-      "userModels": []   
+      "userModels": [],
+      "defaultMotions": [],
+      "userMotions": [], 
+      "selectedMotionIds": []
     },
     "comfyuiServers": ["http://127.0.0.1:8188"],
     "comfyuiAPIkey": "",
