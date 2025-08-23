@@ -155,40 +155,6 @@ let vue_methods = {
       });
       await this.autoSaveSettings();
     },
-    async addLorebook() {
-      // 如果this.newMemory.lorebook未定义，则初始化为空数组
-      if (!this.newMemory.lorebook) {
-        this.newMemory.lorebook = [];
-      }
-      // 在this.newMemory.lorebook的object中添加一个新的键值对
-      this.newMemory.lorebook.push({
-        name: '',
-        value: ''        // 根据类型自动初始化
-      });
-      this.isWorldviewSettingsExpanded = true;
-      await this.autoSaveSettings();
-    },
-    async removeLorebook(index) {
-      if (index === 0) return; // 禁止删除第一个记忆
-      this.newMemory.lorebook.splice(index, 1);
-      await this.autoSaveSettings();
-    },
-    async addRandom(){
-      // 如果this.newMemory.random未定义，则初始化为空数组
-      if (!this.newMemory.random) {
-        this.newMemory.random = [];
-      }
-      this.newMemory.random.push({
-        value: ''        // 根据类型自动初始化
-      });
-      this.isRandomSettingsExpanded = true;
-      await this.autoSaveSettings();
-    },
-    async removeRandom(index) {
-      if (index === 0) return; // 禁止删除第一个随机记忆
-      this.newMemory.random.splice(index, 1);
-      await this.autoSaveSettings();
-    },
     async updateParamType(index) {
       const param = this.settings.extra_params[index];
       // 根据类型初始化值
@@ -1080,6 +1046,7 @@ let vue_methods = {
           if (this.chromeMCPSettings.enabled){
             this.changeChromeMCPEnabled();
           }
+          this.changeMemory();
           await this.loadDefaultModels();
           await this.loadDefaultMotions();
           if (this.asrSettings.enabled) {
@@ -1742,6 +1709,7 @@ let vue_methods = {
       this.fileLinks = [];
       this.isThinkOpen = false; // 重置思考模式状态
       this.asyncToolsID = [];
+      this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
       await this.autoSaveSettings();
     },
@@ -2895,54 +2863,75 @@ let vue_methods = {
         this.newMemory.api_key = provider.apiKey;
       }
     },
+
+    // 世界书条目清空
+    clearBook(idx) {
+      this.newMemory.characterBook[idx].keysRaw = '';
+      this.newMemory.characterBook[idx].content = '';
+    },
+    /* 世界书 */
+    addBook() {
+      this.newMemory.characterBook.push({ keysRaw: '', content: '' });
+    },
+    removeBook(idx) {
+      this.newMemory.characterBook.splice(idx, 1);
+    },
+    clearGreeting(idx) {
+      this.newMemory.alternateGreetings[idx] = '';
+    },
+    clearFirstMes() {
+      this.newMemory.firstMes = '';
+    },
+    /* 删除 alternate greeting */
+    removeGreeting(idx) {
+      this.newMemory.alternateGreetings.splice(idx, 1);
+    },
+    /* 新增 alternate greeting */
+    addGreeting() {
+      this.newMemory.alternateGreetings.push('');
+    },
     async addMemory() {
-      if (this.newMemory.id === null){
-        const newMem = {
-          id: uuid.v4(),
-          name: this.newMemory.name,
-          providerId: this.newMemory.providerId,
-          model:this.newMemory.model,
-          api_key: this.newMemory.api_key,
-          base_url: this.newMemory.base_url,
-          vendor:this.newMemory.providerId ? this.modelProviders.find(p => p.id === this.newMemory.providerId).vendor: "",
-          lorebook: this.newMemory.lorebook,
-          random: this.newMemory.random,
-          basic_character: this.newMemory.basic_character,
-        };
+      /* 把新字段组装成一个“记忆”对象 */
+      const build = () => ({
+        id: this.newMemory.id || uuid.v4(),
+        name: this.newMemory.name,
+        providerId: this.newMemory.providerId,
+        model: this.newMemory.model,
+        api_key: this.newMemory.api_key,
+        base_url: this.newMemory.base_url,
+        vendor: this.newMemory.providerId
+          ? this.modelProviders.find(p => p.id === this.newMemory.providerId)?.vendor || ''
+          : '',
+
+        /* 酒馆 V3 字段 */
+        description:   this.newMemory.description,
+        personality:   this.newMemory.personality,
+        mesExample:    this.newMemory.mesExample,
+        systemPrompt:  this.newMemory.systemPrompt,
+        firstMes:      this.newMemory.firstMes,
+        alternateGreetings: this.newMemory.alternateGreetings.filter(Boolean),
+        characterBook: this.newMemory.characterBook.filter(
+          e => e.keysRaw.trim() || e.content.trim()
+        )
+      });
+
+      /* 新增 or 更新 */
+      if (this.newMemory.id === null) {
+        const newMem = build();
         this.memories.push(newMem);
-        if (this.memorySettings.selectedMemory === null){
+        if (this.memorySettings.selectedMemory === null) {
           this.memorySettings.selectedMemory = newMem.id;
         }
-      }
-      else {
-        const memory = this.memories.find(m => m.id === this.newMemory.id);
-        if (memory) {
-          memory.name = this.newMemory.name;
-          memory.providerId = this.newMemory.providerId;
-          memory.model = this.newMemory.model;
-          memory.api_key = this.newMemory.api_key;
-          memory.base_url = this.newMemory.base_url;
-          memory.vendor = this.newMemory.providerId ? this.modelProviders.find(p => p.id === this.newMemory.providerId).vendor: "";
-          memory.lorebook = this.newMemory.lorebook;
-          memory.random = this.newMemory.random;
-          memory.basic_character = this.newMemory.basic_character;
+      } else {
+        const idx = this.memories.findIndex(m => m.id === this.newMemory.id);
+        if (idx !== -1) {
+          this.memories.splice(idx, 1, build());
         }
       }
-
+      this.resetNewMemory(); // 重置表单
+      this.changeMemory(); // 切换到新记忆
       await this.autoSaveSettings();
       this.showAddMemoryDialog = false;
-      this.newMemory = { 
-        id: null,
-        name: '', 
-        providerId: null,
-        model: '',
-        api_key: '',
-        base_url: '',
-        vendor: '',
-        lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-        random: [{ value: '' }], // 默认至少一个条目
-        basic_character: "",
-       };
     },
     
     async removeMemory(id) {
@@ -3312,33 +3301,60 @@ let vue_methods = {
     escapeSeparator(s) {
       return s.replace(/\\n/g, '\n').replace(/\\t/g, '\t')
     },
-    clearParam(index) {
-      this.newMemory.lorebook[index].name = "";
-      this.newMemory.lorebook[index].value = "";
-      this.autoSaveSettings();
-    },
-    clearRandom(index) {
-      this.newMemory.random[index].value = "";
-      this.autoSaveSettings();
+
+    // 一键重置
+    resetNewMemory() {
+      this.newMemory = {
+        id: null,
+        name: '',
+        providerId: null,
+        model: '',
+        base_url: '',
+        api_key: '',
+        vendor: '',
+        description: '',
+        personality: '',
+        mesExample: '',
+        systemPrompt: '',
+        firstMes: '',
+        alternateGreetings: [],
+        characterBook: [{ keysRaw: '', content: '' }]
+      };
     },
     copyExistingMemoryData(selectedId) {
-      const existingMemory = this.memories.find(memory => memory.id === selectedId);
-      if (existingMemory) {
-        this.newMemory = { ...existingMemory };
-        this.newMemory.id = null; // 确保新记忆的ID为null，以便在创建时生成新的ID
-      } else {
-        this.newMemory = { 
+      const src = this.memories.find(m => m.id === selectedId);
+      if (src) {
+        /* 把旧字段映射到新字段，没有的就给默认值 */
+        this.newMemory = {
           id: null,
-          name: '', 
-          providerId: null,
-          model: '',
-          base_url: '',
-          api_key: '',
-          vendor: '',
-          lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-          random: [{ value: '' }], // 默认至少一个条目
-          basic_character: '',
+          name: src.name || '',
+          providerId: src.providerId || null,
+          model: src.model || '',
+          base_url: src.base_url || '',
+          api_key: src.api_key || '',
+          vendor: src.vendor || '',
+
+          /* 旧→新 */
+          description: src.basic_character || src.description || '',
+          personality: src.personality || '',
+          mesExample: src.mesExample || '',
+          systemPrompt: src.systemPrompt || '',
+          firstMes: src.firstMes || (Array.isArray(src.random) ? src.random[0]?.value : ''),
+          alternateGreetings:
+            Array.isArray(src.alternateGreetings)
+              ? src.alternateGreetings
+              : (src.random || []).slice(1).map(r => r.value),
+          characterBook:
+            Array.isArray(src.characterBook)
+              ? src.characterBook
+              : (src.lorebook || []).map(l => ({
+                  keysRaw: l.name,
+                  content: l.value
+                }))
         };
+      } else {
+        /* 新建：直接给空模板 */
+        this.resetNewMemory();
       }
     },
     colorBlend(color1, color2, ratio) {
@@ -3750,28 +3766,101 @@ let vue_methods = {
       this.dialogVisible = true
     },
     downloadMemory(memory) {
-      // 创建一个新的对象，只包含需要下载的字段
-      const { id, name, basic_character, lorebook, random } = memory;
-      
-      const dataToDownload = {
-        id,
-        name,
-        basic_character,
-        lorebook,
-        random
-        // 可以根据需要添加其他非敏感字段
+      // 仅导出酒馆 V3 所需字段，敏感信息全部剔除
+      const card = {
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        name: memory.name,
+        description: memory.description || '',
+        personality: memory.personality || '',
+        mes_example: memory.mesExample || '',
+        first_mes: memory.firstMes || '',
+        system_prompt: memory.systemPrompt || '',
+        alternate_greetings: Array.isArray(memory.alternateGreetings)
+          ? memory.alternateGreetings.filter(Boolean)
+          : [],
+        character_book: {
+          name: memory.name,
+          entries: Array.isArray(memory.characterBook)
+            ? memory.characterBook
+                .filter(e => e.keysRaw?.trim() && e.content?.trim())
+                .map((e, idx) => ({
+                  id: idx,
+                  keys: e.keysRaw
+                    .split(/\r?\n/)
+                    .map(k => k.trim())
+                    .filter(Boolean),
+                  secondary_keys: [],
+                  content: e.content,
+                  comment: '',
+                  constant: false,
+                  selective: true,
+                  insertion_order: 100,
+                  enabled: true,
+                  position: 'before_char',
+                  use_regex: true,
+                  extensions: {}
+                }))
+            : []
+        }
+        // 其余字段如 avatar、tags、scenario…按需补空
       };
 
-      const dataStr = JSON.stringify(dataToDownload, null, 2); // 将新对象转换为 JSON 字符串
-      const blob = new Blob([dataStr], { type: 'application/json' }); // 创建 Blob
-      const url = URL.createObjectURL(blob); // 创建 URL
-      const a = document.createElement('a'); // 创建一个链接元素
+      const blob = new Blob([JSON.stringify(card, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `${memory.name}.json`; // 设置下载文件的名称
-      document.body.appendChild(a); // 将链接添加到文档中
-      a.click(); // 自动点击链接开始下载
-      document.body.removeChild(a); // 下载后移除链接
-      URL.revokeObjectURL(url); // 释放 URL 对象
+      a.download = `${memory.name}_v3.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    changeMemory() {
+      if (this.memorySettings.is_memory){
+        // 根据selectedMemory获取当前的memories中的对应的记忆
+        let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
+        this.firstMes = curMemory.firstMes;
+        this.alternateGreetings= curMemory.alternateGreetings;
+      }
+      else{
+        this.firstMes = '';
+        this.alternateGreetings = [];
+      }
+      this.randomGreetings();
+      this.autoSaveSettings(); // 保存设置
+    },
+    randomGreetings() {
+      let greetings = [this.firstMes, ...this.alternateGreetings];
+      // 过滤掉空字符串
+      greetings = greetings.filter(greeting => greeting.trim() !== '');
+      // 替换掉开场白中的所有的{{user}}为this.memorySettings.userName
+      greetings = greetings.map(greeting => greeting.replace(/{{user}}/g, this.memorySettings.userName));
+      // 根据selectedMemory获取当前的memories中的对应的记忆
+      let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
+      // 替换掉开场白中的所有的{{char}}为curMemory.name
+      greetings = greetings.map(greeting => greeting.replace(/{{char}}/g, curMemory.name));
+      if (greetings.length > 0) {
+        let randomIndex = Math.floor(Math.random() * greetings.length);
+        // 将随机的开场白立刻加入的this.messages中
+        // 如果this.messages中第二个元素是开场白，则替换，否则在第一个元素之后插入
+        if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
+          this.messages[1].content = greetings[randomIndex];
+        } else {
+          this.messages.splice(1, 0, {
+            role: 'assistant',
+            content: greetings[randomIndex]
+          });
+        }
+      } 
+      else{
+        // 如果this.messages中第二个元素是开场白，则移除
+        if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
+          this.messages.splice(1, 1);
+        }
+      }
     },
     browseJsonFile() {
       const input = document.createElement('input');
@@ -3808,14 +3897,29 @@ let vue_methods = {
     },
 
     importMemoryData(jsonData) {
-      // 根据 JSON 数据填充 newMemory 对象
-      this.newMemory.name = jsonData.name || '';
-      this.newMemory.basic_character = jsonData.basic_character || '';
-      this.newMemory.lorebook = jsonData.lorebook || [];
-      this.newMemory.random = jsonData.random || [];
-      this.newMemory.providerId = jsonData.providerId || null;
+      // 兼容 V2/V3：统一抽出 data
+      const data = jsonData.data || jsonData;
 
-      // 可以根据需要添加更多字段的映射
+      this.newMemory = {
+        ...this.newMemory,                      // 保持 providerId 等旧字段
+        name: data.name || '',
+        description: data.description || '',
+        personality: data.personality || '',
+        mesExample: data.mes_example || '',
+        systemPrompt: data.system_prompt || '',
+        firstMes: data.first_mes || '',
+        alternateGreetings: Array.isArray(data.alternate_greetings)
+          ? data.alternate_greetings
+          : [''],
+        characterBook:
+          Array.isArray(data.character_book?.entries) &&
+          data.character_book.entries.length
+            ? data.character_book.entries.map(e => ({
+                keysRaw: (e.keys || []).join('\n'),
+                content: e.content || ''
+              }))
+            : [{ keysRaw: '', content: '' }]
+      };
     },
 
     removeJsonFile() {

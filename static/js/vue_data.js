@@ -956,24 +956,31 @@ let vue_data = {
     activeMemoryTab: 'add',
     activeMemoryTabName: 'autoUpdateSetting',
     memories: [],
-    newMemory: { 
+    newMemory: {
       id: null,
-      name: '', 
+      name: '',
       providerId: null,
       model: '',
       base_url: '',
       api_key: '',
       vendor: '',
-      lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-      random: [{ value: '' }], // 默认至少一个条目
-      basic_character: '',
+      description: '',
+      personality: '',
+      mesExample: '',
+      systemPrompt: '',
+      firstMes: '',
+      alternateGreetings: [],
+      characterBook: [{ keysRaw: '', content: '' }]
     },
+    firstMes: '',
+    alternateGreetings: [],
     showAddMemoryDialog: false,
     showMemoryDialog: false,
     memorySettings: {
       selectedMemory: null,
       is_memory: false,
-      memoryLimit: 10
+      memoryLimit: 10,
+      userName:'user'
     },
     textFiles: [],
     imageFiles: [],

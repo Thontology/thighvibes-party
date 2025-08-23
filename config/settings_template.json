@@ -124,7 +124,8 @@
     "memorySettings": {
       "selectedMemory": null,
       "is_memory": false,
-      "memoryLimit": 10
+      "memoryLimit": 10,
+      "userName":"user"
     },
     "codeSettings": {
       "enabled": false,

@@ -75,7 +75,6 @@ ChromeMCP_client = None
 mcp_client_list = {}
 locales = {}
 _TOOL_HOOKS = {}
-cur_random = []
 ALLOWED_EXTENSIONS = [
   # 办公文档
   'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
@@ -880,6 +879,12 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
             source_prompt += fileLinks_message
         user_prompt = request.messages[-1]['content']
         if settings["memorySettings"]["is_memory"]:
+            if settings["memorySettings"]["userName"]:
+                print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"})
             lore_content = ""
             assistant_reply = ""
             # 找出request.messages中上次的assistant回复
@@ -887,39 +892,70 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 if request.messages[i]['role'] == 'assistant':
                     assistant_reply = request.messages[i]['content']
                     break
-            if cur_memory["lorebook"]:
-                for lore in cur_memory["lorebook"]:
-                    if lore["name"] != "" and (lore["name"] in user_prompt or lore["name"] in assistant_reply):
-                        lore_content = lore_content + "\n\n" + f"{lore['name']}：{lore['value']}"
-            global cur_random 
-            # 如果request.messages中不包含assistant回复，说明是首次提问，触发随机设定
-            if not assistant_reply:
-                # 如果 cur_memory 中有 random 条目
-                if cur_memory.get("random") and len(cur_memory["random"]) > 0:
-                    # 随机选择一个 random 条目
-                    random_entry = random.choice(cur_memory["random"])
-                    if random_entry.get("value"):
-                        lore_content = lore_content + "\n\n" + f"{random_entry['value']}"
-                        cur_random.append({"id":memoryId,"value":random_entry["value"]})
-                        print("新随机设定：",{"id":memoryId,"value":random_entry["value"]})
-            else:
-                for item in cur_random:
-                    if item["id"] == memoryId:
-                        lore_content = lore_content + "\n\n" + f"{item['value']}"
-                        print("沿用随机设定：",{"id":memoryId,"value":item['value']})  
-                        break 
-            if cur_memory["basic_character"]:
-                print("添加角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+            if cur_memory["characterBook"]:
+                for lore in cur_memory["characterBook"]:
+                    # lore['keysRaw'] 按照换行符分割，并去除空字符串
+                    lore_keys = lore["keysRaw"].split("\n")
+                    lore_keys = [key for key in lore_keys if key != ""]
+                    print(lore_keys)
+                    # 如果lore_keys不为空，并且lore_keys的任意一个元素在user_prompt或者assistant_reply中，则添加lore['content']到lore_content中
+                    if lore_keys != [] and any(key in user_prompt or key in assistant_reply for key in lore_keys):
+                        lore_content += lore['content'] + "\n\n"
             if lore_content:
+                if settings["memorySettings"]["userName"]:
+                    # 替换lore_content中的{{user}}为settings["memorySettings"]["userName"]
+                    lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换lore_content中的{{char}}为cur_memory["name"]
+                lore_content = lore_content.replace("{{char}}", cur_memory["name"])
                 print("添加世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
                 if request.messages and request.messages[0]['role'] == 'system':
                     request.messages[0]['content'] += "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"})
+            if cur_memory["description"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["description"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["description"]中的{{char}}为cur_memory["name"]
+                cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
+                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+            if cur_memory["personality"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["personality"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["personality"]中的{{char}}为cur_memory["name"]
+                cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
+                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"}) 
+            if cur_memory['mesExample']:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["mesExample"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["mesExample"]中的{{char}}为cur_memory["name"]
+                cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{char}}", cur_memory["name"])
+                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"})
+            if cur_memory["systemPrompt"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["systemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
+                cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
+                print("添加系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
                 try:
@@ -2480,6 +2516,12 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         kb_list = []
         user_prompt = request.messages[-1]['content']
         if settings["memorySettings"]["is_memory"]:
+            if settings["memorySettings"]["userName"]:
+                print("添加用户名：\n\n" + lore_content + "\n\n用户名结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"})
             lore_content = ""
             assistant_reply = ""
             # 找出request.messages中上次的assistant回复
@@ -2487,39 +2529,70 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if request.messages[i]['role'] == 'assistant':
                     assistant_reply = request.messages[i]['content']
                     break
-            if cur_memory["lorebook"]:
-                for lore in cur_memory["lorebook"]:
-                    if lore["name"] != "" and (lore["name"] in user_prompt or lore["name"] in assistant_reply):
-                        lore_content = lore_content + "\n\n" + f"{lore['name']}：{lore['value']}"
-            global cur_random 
-            # 如果request.messages中不包含assistant回复，说明是首次提问，触发随机设定
-            if not assistant_reply:
-                # 如果 cur_memory 中有 random 条目
-                if cur_memory.get("random") and len(cur_memory["random"]) > 0:
-                    # 随机选择一个 random 条目
-                    random_entry = random.choice(cur_memory["random"])
-                    if random_entry.get("value"):
-                        lore_content = lore_content + "\n\n" + f"{random_entry['value']}"
-                        cur_random.append({"id":memoryId,"value":random_entry["value"]})
-                        print("新随机设定：",{"id":memoryId,"value":random_entry["value"]})
-            else:
-                for item in cur_random:
-                    if item["id"] == memoryId:
-                        lore_content = lore_content + "\n\n" + f"{item['value']}"
-                        print("沿用随机设定：",{"id":memoryId,"value":item['value']})  
-                        break 
-            if cur_memory["basic_character"]:
-                print("添加角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+            if cur_memory["characterBook"]:
+                for lore in cur_memory["characterBook"]:
+                    # lore['keysRaw'] 按照换行符分割，并去除空字符串
+                    lore_keys = lore["keysRaw"].split("\n")
+                    lore_keys = [key for key in lore_keys if key != ""]
+                    print(lore_keys)
+                    # 如果lore_keys不为空，并且lore_keys的任意一个元素在user_prompt或者assistant_reply中，则添加lore['content']到lore_content中
+                    if lore_keys != [] and any(key in user_prompt or key in assistant_reply for key in lore_keys):
+                        lore_content += lore['content'] + "\n\n"
             if lore_content:
+                if settings["memorySettings"]["userName"]:
+                    # 替换lore_content中的{{user}}为settings["memorySettings"]["userName"]
+                    lore_content = lore_content.replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换lore_content中的{{char}}为cur_memory["name"]
+                lore_content = lore_content.replace("{{char}}", cur_memory["name"])
                 print("添加世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
                 if request.messages and request.messages[0]['role'] == 'system':
                     request.messages[0]['content'] += "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"})
+            if cur_memory["description"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["description"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["description"] = cur_memory["description"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["description"]中的{{char}}为cur_memory["name"]
+                cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
+                print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+            if cur_memory["personality"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["personality"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["personality"] = cur_memory["personality"].replace("{{user}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["personality"]中的{{char}}为cur_memory["name"]
+                cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
+                print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"}) 
+            if cur_memory['mesExample']:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["mesExample"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["mesExample"]中的{{char}}为cur_memory["name"]
+                cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{char}}", cur_memory["name"])
+                print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"})
+            if cur_memory["systemPrompt"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换cur_memory["systemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
+                    cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
+                cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
+                print("添加系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
                 try:
