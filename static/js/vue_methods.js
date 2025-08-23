@@ -121,8 +121,8 @@ let vue_methods = {
     return originalUrl;
   },
   async resetMessage(index) {
-    this.messages[index].content = this.t('defaultSystemPrompt');
-    this.system_prompt = this.t('defaultSystemPrompt');
+    this.messages[index].content = " ";
+    this.system_prompt = " ";
     await this.autoSaveSettings();
   },
 
@@ -385,7 +385,7 @@ let vue_methods = {
         this.system_prompt = conversation.system_prompt;
       }
       else {
-        this.system_prompt = this.t('defaultSystemPrompt');
+        this.system_prompt = " ";
         this.messages = [{ role: 'system', content: this.system_prompt }];
       }
       this.scrollToBottom();
@@ -940,7 +940,7 @@ let vue_methods = {
     changeMainAgent(agent) {
       this.mainAgent = agent;
       if (agent === 'super-model') {
-        this.system_prompt = this.t('defaultSystemPrompt')
+        this.system_prompt = " "
       }
       else {
         this.system_prompt = this.agents[agent].system_prompt;
