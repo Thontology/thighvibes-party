@@ -176,29 +176,23 @@ if ('serviceWorker' in navigator) {
             </el-icon>
             <template #title>{{ t('toolkit') }}</template>
           </el-menu-item>
-          <el-menu-item index="agent_group">
-            <el-icon>
-              <i class="fa-solid fa-gamepad"></i>
-            </el-icon>
-            <template #title>{{ t('agentSuite') }}</template>
-          </el-menu-item>
           <el-menu-item index="deploy-bot">
               <el-icon>
                   <i class="fa-solid fa-robot"></i>
               </el-icon>
               <template #title>{{ t('deployBot') }}</template>
           </el-menu-item>
-          <el-menu-item index="storage">
-            <el-icon>
-              <i class="fa-solid fa-box-archive"></i>
-            </el-icon>
-            <template #title>{{ t('storage') }}</template>
-          </el-menu-item>
           <el-menu-item index="api-group">
             <el-icon>
               <i class="fa-solid fa-plug"></i>
             </el-icon>
             <template #title>{{ t('apiGroup') }}</template>
+          </el-menu-item>
+          <el-menu-item index="storage">
+            <el-icon>
+              <i class="fa-solid fa-box-archive"></i>
+            </el-icon>
+            <template #title>{{ t('storage') }}</template>
           </el-menu-item>
           <el-menu-item index="system">
             <el-icon>
@@ -470,6 +464,39 @@ if ('serviceWorker' in navigator) {
             </div>
           </el-dialog>
           <el-dialog
+            v-model="showModelDialog"
+            :title="t('mainModel')"
+            width="600px">
+            <div class="knowledge-dialog-content">
+              <!-- 服务器列表 -->
+              <div v-for="provider in modelProviders" 
+                :key="provider.id" 
+                class="knowledge-item" 
+                @click="settings.selectedProvider=provider.id;selectMainProvider(provider.id); showModelDialog = false">
+                <img 
+                  :src="getVendorLogo(provider.vendor)" 
+                  class="mini-vendor-logo"
+                />
+                <span>{{ provider.modelId }}</span>
+              </div>
+              <div v-if="Object.keys(modelProviders).length === 0" class="empty-tip">
+                  {{ t('firstTimeUse') }}
+                  <el-link
+                    type="primary"
+                    :underline="false"
+                    class="font-medium"
+                    @click="switchToApiBox"
+                  >
+                    <el-icon class="mr-1">
+                      <i class="fa-solid fa-key"></i>
+                    </el-icon>{{ t('keyBoxInterface') }}
+                  </el-link>
+                  {{ t('addProviderReturnSelect') }}
+                  {{ t('mainmodelnotice') }}
+              </div>
+            </div>
+          </el-dialog>
+          <el-dialog
             v-model="showMCPServerDialog"
             :title="t('mcpServersManagement')"
             width="600px">
@@ -710,6 +737,17 @@ if ('serviceWorker' in navigator) {
                 v-if="!isBtnCollapse"
                 circle>
                 <i class="fa-solid fa-image"></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('mainModel')" placement="top">
+              <el-button
+                @click="showModelDialog = true"
+                class="icon-btn knowledge-base-btn"
+                type='default'
+                v-if="!isBtnCollapse"
+                circle>
+                <i class="fa-solid fa-microchip"></i>
               </el-button>
             </el-tooltip>
 
@@ -3819,6 +3857,614 @@ if ('serviceWorker' in navigator) {
                   </template>
                 </el-dialog>
               </div>
+
+              <!-- 在agent_group的内容区添加ComfyUI配置 -->
+              <div v-show="subMenu === 'comfyui'" class="page comfyui-container">
+                <el-tabs>
+                  <!-- 配置选项卡 -->
+                  <el-tab-pane :label="t('comfyuiConfig')">
+                    <el-form class="settings-form" label-position="top">
+                      <div class="tool-item">
+                        <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center;">
+                          <span>
+                            <el-icon><i class="fa-solid fa-server"></i></el-icon>
+                            {{ t('comfyuiServers') }}
+                            <el-link
+                              type="primary"
+                              :underline="false"
+                              href="https://platform.comfy.org/profile/api-keys" 
+                              target="_blank"
+                            >
+                              <el-icon class="mr-1">
+                                <i class="fa-solid fa-key"></i>
+                              </el-icon>{{ t('gotoAPI') }}
+                            </el-link>
+                          </span>
+                        </div>
+                        <div class="tool-content">
+                          <div class="server-item">
+                            <el-input 
+                              v-model="comfyuiAPIkey" 
+                              :placeholder="t('comfyuiAPIKey')"
+                              class="full-width-input"
+                              show-password
+                              @change="autoSaveSettings"
+                            >
+                            </el-input>
+                          </div>
+                          <div v-for="(server, index) in comfyuiServers" 
+                              :key="index" 
+                              class="server-item">
+                            <el-input 
+                              v-model="comfyuiServers[index]" 
+                              placeholder="http://localhost:8188"
+                              class="full-width-input"
+                              @change="autoSaveSettings"
+                            >
+                            </el-input>
+                            <el-tooltip :content="t('connectComfyUIServer')" placement="top">
+                              <el-button 
+                                type="primary" 
+                                @click="connectComfyUI(index)" 
+                                :disabled="comfyuiServers.length === 0 || isConnecting"
+                                circle
+                              >
+                                <template v-if="isConnecting">
+                                  <i class="fa-solid fa-spinner fa-spin"></i>
+                                </template>
+                                <template v-else>
+                                  <i class="fa-solid fa-plug"></i>
+                                </template>
+                              </el-button>
+                            </el-tooltip>
+                            <el-tooltip :content="t('removeComfyUIServer')" placement="top">
+                              <el-button 
+                                v-if="index !== 0"
+                                @click="removeComfyUIServer(index)"
+                                type="danger" 
+                                circle>
+                                <i class="fa-solid fa-trash"></i>
+                              </el-button>
+                            </el-tooltip>
+                          </div>
+                          <el-button 
+                            @click="addComfyUIServer"
+                            type="primary" 
+                            plain 
+                            class="add-server-btn">
+                            <i class="fa-solid fa-plus"></i> {{ t('addServer') }}
+                          </el-button>
+                        </div>
+                      </div>
+                      <el-alert
+                          :title="t('comfyuiConfigInfo')"
+                          type="info"
+                          :closable="false"
+                          class="mb-2"
+                        >
+                          1. {{ t('comfyuiConfigInfo1') }}<br>
+                          2. {{ t('comfyuiConfigInfo2') }}<br>
+                          3. {{ t('comfyuiConfigInfo3') }}<br>
+                          4. {{ t('comfyuiConfigInfo4') }}<br>
+                      </el-alert>
+                    </el-form>
+                  </el-tab-pane>
+
+                  <!-- 展示选项卡 -->
+                  <el-tab-pane :label="t('comfyuiDisplay')">
+                    <div class="comfyui-iframe-container">
+                      <iframe 
+                        v-if="activeComfyUIUrl"
+                        :src="activeComfyUIUrl" 
+                        frameborder="0"
+                        class="comfyui-iframe"></iframe>
+                      <div v-else class="no-server-tip">
+                        <el-empty :description="t('noServerTip')" />
+                      </div>
+                    </div>
+                  </el-tab-pane>
+
+                      <!-- 新增 ComfyUI 工作流转工具选项卡 -->
+                  <el-tab-pane :label="t('comfyuiWorkflowTool')">
+                  <!-- 磁贴列表 -->
+                    <div class="provider-grid">
+                      <div v-for="file in workflows" :key="file.unique_filename" class="provider-card knowledge-card">
+                        <div class="card-header">
+                          <el-switch v-model="file.enabled" @change="autoSaveSettings"></el-switch>
+                          <div class="card-actions">
+                            <!-- 下载按钮 -->
+                            <a :href="`${partyURL}/uploaded_files/${file.unique_filename}`" download target="_blank">
+                              <el-button circle size="small" class="file-actions-btn">
+                                  <i class="fa-solid fa-download"></i>
+                              </el-button>
+                            </a>
+                            <!-- 删除按钮 -->
+                            <el-button
+                              type="danger"
+                              circle
+                              size="small"
+                              @click="deleteWorkflow(file.unique_filename)">
+                              <i class="fa-solid fa-trash"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                        <h3>{{ file.original_filename }}</h3>
+                        <span>{{ file.description }}</span>
+                      </div>
+                      <!-- 添加上传按钮 -->
+                      <div class="provider-card add-tile" @click="showWorkflowUploadDialog = true">
+                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('uploadWorkflowJson') }}</div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
+                <!-- 工作流上传对话框 -->
+                <el-dialog
+                  v-model="showWorkflowUploadDialog"
+                  :title="t('uploadWorkflowJson')"
+                  width="600px"
+                >
+                  <div class="upload-container">
+                    <div
+                      class="drop-zone"
+                      @dragover.prevent
+                      @drop.prevent="handleWorkflowDrop"
+                      @click="browseWorkflowFile"
+                    >
+                      <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                      <p>{{ t('clickOrDrop') }}</p>
+                    </div>
+                    
+                    <!-- 文件列表 -->
+                    <div class="compact-file-list" v-if="workflowFile">
+                      <div class="compact-file-item">
+                        <span class="file-name">@{{ workflowFile.name }}</span>
+                        <el-button
+                          @click.stop="removeWorkflowFile"
+                          class="delete-icon"
+                          circle
+                        >
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+
+                    <div class="input-box" required>
+                      <el-input
+                        v-model="workflowDescription"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="t('descriptionPlaceholder')"
+                      />
+                    </div>
+
+                    <div class="input-box">
+                      <!-- 文字输入位置选择 -->
+                      <el-select v-model="selectedTextInput" value-key="id"  :placeholder="t('selectTextInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in textInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <div class="input-box">
+                      <!-- 文字输入位置选择 -->
+                      <el-select v-model="selectedTextInput2" value-key="id"  :placeholder="t('selectTextInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in textInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <div class="input-box">
+                      <!-- 图片输入位置选择 -->
+                      <el-select v-model="selectedImageInput" value-key="id" :placeholder="t('selectImageInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in imageInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <div class="input-box">
+                      <!-- 图片输入位置选择 -->
+                      <el-select v-model="selectedImageInput2" value-key="id" :placeholder="t('selectImageInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in imageInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <div class="input-box">
+                      <!-- 种子位置选择 -->
+                      <el-select v-model="selectedSeedInput" value-key="id" :placeholder="t('selectSeedInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in seedInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <div class="input-box">
+                      <!-- 种子位置选择 -->
+                      <el-select v-model="selectedSeedInput2" value-key="id" :placeholder="t('selectSeedInput')" class="full-width-input">
+                        <el-option
+                          v-for="(node, index) in seedInputOptions"
+                          :key="index"
+                          :label="node.label"
+                          :value="node.value"
+                        ></el-option>
+                      </el-select>
+                    </div>
+                    <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        {{ t('comfyuiWorkflowInfo') }}
+                    </el-alert>
+                  </div>
+                  <template #footer>
+                    <el-button @click="cancelWorkflowUpload">{{ t('cancel') }}</el-button>
+                    <el-button type="primary" @click="uploadWorkflow" :disabled="!workflowFile">
+                      {{ t('createImmediately') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- A2A页面 -->
+              <div v-show="subMenu === 'a2a'" class="page a2a-container">
+                <div class="provider-grid">
+                  <div class="provider-card a2a-card" v-for="(server, url) in a2aServers" :key="url">
+                    <div class="card-header">
+                      <template v-if="server.status === 'initializing'">
+                        <el-icon class="loading-spinner">
+                          <i class="fa-solid fa-spinner"></i>
+                        </el-icon>
+                      </template>
+                      <template v-else>
+                        <el-switch v-model="server.enabled" @change="autoSaveSettings"></el-switch>
+                      </template>
+                      <div class="card-actions">
+                        <el-button @click="removeA2AServer(url)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="a2a-content">
+                      <h3 class="a2a-name">{{ server.name }}</h3>
+                      <p class="a2a-description">{{ server.description }}</p>
+                      <div class="a2a-skills">
+                        <el-tag v-for="(skill, index) in server.skills" :key="index" type="info" size="small">
+                          {{ skill }}
+                        </el-tag>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="provider-card add-tile" @click="showAddA2ADialog = true">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addA2AServer') }}</div>
+                  </div>
+                </div>
+            
+                <!-- 添加A2A服务器对话框 -->
+                <el-dialog v-model="showAddA2ADialog" :title="t('addA2AServer')" width="500px" label-position="top">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('A2AUrl')" required>
+                      <el-input v-model="newA2AUrl" placeholder="http://127.0.0.1:5000"></el-input>
+                    </el-form-item>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="showAddA2ADialog = false">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="addA2AServer"
+                      :disabled="!isValidUrl(newA2AUrl)">
+                      {{ t('confirmAdd') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- MCP页面 -->
+              <div v-show="subMenu === 'mcp'" class="page mcp-container">
+                <!-- 磁贴网格 -->
+                <div class="provider-grid">
+                  <div class="provider-card knowledge-card" v-for="(server, name) in mcpServers" :key="name">
+                    <div class="card-header">
+                      <!-- 加载状态指示 -->
+                      <template v-if="server.processingStatus === 'initializing'">
+                        <el-icon class="loading-spinner">
+                          <i class="fa-solid fa-spinner"></i>
+                        </el-icon>
+                      </template>
+                      <template v-else>
+                        <el-switch
+                          :active-value="false"  
+                          :inactive-value="true" 
+                          v-model="server.disabled"
+                          @change="autoSaveSettings"
+                          class="kb-switch"
+                          :disabled="server.processingStatus === 'server_error'"
+                        ></el-switch>
+                      </template>
+                      <div class="card-actions">
+                        <el-button
+                          @click="restartMCPServer(name)"
+                          type="info"
+                          circle
+                          size="small"
+                        >
+                          <i class="fa-solid fa-rotate-right"></i>
+                        </el-button>
+                        <el-button
+                          @click="editMCPServer(name)"
+                          type="primary"
+                          circle
+                          size="small"
+                        >
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button
+                          @click="removeMCPServer(name)"
+                          type="danger"
+                          circle
+                          size="small"
+                        >
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="kb-content">
+                      <div class="kb-header">
+                        <h3 class="kb-title">{{ name }}</h3>
+                      </div>
+                    </div>
+                  </div>
+            
+                  <!-- 添加新磁贴 -->
+                  <div class="provider-card add-tile" @click="showAddMCPDialog = true; this.newMCPJson = '';updateMCPExample()">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewMCP') }}</div>
+                  </div>
+                </div>
+
+                <!-- 添加MCP对话框 -->
+                <el-dialog
+                  v-model="showAddMCPDialog"
+                  :title="t('addNewMCP')"
+                  width="600px"
+                  @closed="newMCPJson = ''">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('serverType')">
+                      <el-select 
+                        v-model="newMCPType" 
+                        @change="updateMCPExample"
+                        class="full-width-input">
+                        <el-option 
+                          :label="t('stdioServer')" 
+                          value="stdio">
+                        </el-option>
+                        <el-option
+                          :label="t('sseServer')"
+                          value="sse">
+                        </el-option>
+                        <el-option
+                          :label="t('wsServer')"
+                          value="ws">
+                        </el-option>
+                        <el-option
+                          :label="t('streamableHttpServer')"
+                          value="streamablehttp">
+                        </el-option>
+                      </el-select>
+                    </el-form-item>
+                
+                    <el-alert type="info" :closable="false" class="mb-2">
+                      {{ t('mcpJsonFormat') }}
+                      <pre class="json-example">{{ currentMCPExample }}</pre>
+                    </el-alert>
+                
+                    <el-form-item :label="t('mcpJsonInput')">
+                      <el-input
+                        v-model="newMCPJson"
+                        type="textarea"
+                        :rows="8"
+                        :placeholder="t('mcpJsonPlaceholder')"
+                        resize="none"/>
+                    </el-form-item>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="showAddMCPDialog = false; this.newMCPJson = ''">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="addMCPServer"
+                      :disabled="!newMCPJson">
+                      {{ t('confirmAdd') }}
+                    </el-button>
+                  </template>
+                </el-dialog>          
+                <el-dialog
+                  v-model="showMCPConfirm"
+                  :title="t('confirmDeleteTitle')"
+                  width="400px"
+                  @closed="deletingMCPName = null">
+                  <div class="confirm-content">
+                    <p>{{ t('confirmDeleteMCP', { name: deletingMCPName }) }}</p>
+                    <div class="confirm-buttons">
+                      <el-button @click="showMCPConfirm = false">{{ t('cancel') }}</el-button>
+                      <el-button type="danger" @click="confirmDeleteMCP">{{ t('confirm') }}</el-button>
+                    </div>
+                  </div>
+                </el-dialog>
+              </div>
+              <!-- LLM工具页面 -->
+              <div v-show="subMenu === 'llmTool'" class="page llm-tool-container">
+                <!-- 磁贴网格 -->
+                <div class="provider-grid">
+                  <!-- 已有LLM工具配置 -->
+                  <div class="provider-card llm-card" v-for="(tool, id) in llmTools" :key="id">
+                    <div class="card-header">
+                      <el-switch v-model="tool.enabled" @change="autoSaveSettings"></el-switch>
+                      <div class="card-actions">
+                        <el-button @click="removeLLMTool(id)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="llm-content">
+                      <h3 class="knowledge-info">{{ tool.name }}</h3>
+                      <el-tag type="info" size="small">{{ toolTypeLabel(tool.type) }}</el-tag>
+                      <p class="knowledge-desc">{{ tool.description || t('noDescription') }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 添加新LLM工具 -->
+                  <div class="provider-card add-tile" @click="showLLMForm = true">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addLLMTool') }}</div>
+                  </div>
+                </div>
+
+                <!-- 添加/编辑LLM工具对话框 -->
+                <el-dialog v-model="showLLMForm" :title="editingLLM ? t('editLLMTool') : t('addLLMTool')" width="600px">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('toolName')" required>
+                      <el-input v-model="newLLMTool.name" :placeholder="t('toolNamePlaceholder')"/>
+                    </el-form-item>
+
+                    <el-form-item :label="t('interfaceType')" required>
+                      <el-select 
+                        v-model="newLLMTool.type" 
+                        @change="handleTypeChange"
+                        filterable
+                        allow-create
+                        :placeholder="t('selectInterfaceType')">
+                        <el-option
+                          v-for="type in llmInterfaceTypes"
+                          :key="type.value"
+                          :label="type.label"
+                          :value="type.value"
+                        />
+                      </el-select>
+                    </el-form-item>
+
+                    <el-form-item :label="t('description')" required>
+                      <el-input
+                        v-model="newLLMTool.description"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="t('descriptionPlaceholder')"
+                      />
+                    </el-form-item>
+
+                    <el-form-item :label="t('baseURL')" required>
+                      <el-input
+                        v-model="newLLMTool.base_url"
+                        :placeholder="defaultBaseURL"
+                      />
+                    </el-form-item>
+
+                    <el-form-item :label="t('apiKey')" required>
+                      <el-input
+                        v-model="newLLMTool.api_key"
+                        show-password
+                      />
+                    </el-form-item>
+
+                    <el-form-item :label="t('modelName')" required>
+                      <el-input
+                        v-model="newLLMTool.model"
+                      >
+                      </el-input>
+                    </el-form-item>
+                  </el-form>
+
+                  <template #footer>
+                    <el-button @click="cancelLLMTool">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="saveLLMTool"
+                      :disabled="!formValid">
+                      {{ editingLLM ? t('save') : t('createImmediately') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- 自定义HTTP工具页面 -->
+              <div v-show="subMenu === 'customHttpTool'" class="page custom-http-tool-container">
+                <!-- 磁贴网格 -->
+                <div class="provider-grid">
+                  <div class="provider-card custom-http-tool-card" v-for="tool in customHttpTools" :key="tool.id">
+                    <div class="card-header">
+                      <el-switch v-model="tool.enabled" @change="autoSaveSettings"></el-switch>
+                      <div class="card-actions">
+                        <el-button @click="editCustomHttpTool(tool.id)" type="default" circle size="small">
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button @click="removeCustomHttpTool(tool.id)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="custom-http-tool-content">
+                      <h3 class="custom-http-tool-name">{{ tool.name }}</h3>
+                      <p class="custom-http-tool-description">{{ tool.description }}</p>
+                    </div>
+                  </div>
+                  <!-- 添加新自定义HTTP工具 -->
+                  <div class="provider-card add-tile" @click="showCustomHttpToolForm = true">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addCustomHttpTool') }}</div>
+                  </div>
+                </div>
+
+                <!-- 添加/编辑自定义HTTP工具对话框 -->
+                <el-dialog v-model="showCustomHttpToolForm" :title="editingCustomHttpTool ? t('editCustomHttpTool') : t('addCustomHttpTool')" width="600px">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('toolName')" required>
+                      <el-input v-model="newCustomHttpTool.name" :placeholder="t('HTTPNamePlaceholder')"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('description')" required>
+                      <el-input v-model="newCustomHttpTool.description" type="textarea" :rows="3" :placeholder="t('descriptionPlaceholder')"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('URL')" required>
+                      <el-input v-model="newCustomHttpTool.url" :placeholder="t('urlPlaceholder')"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('method')" required>
+                      <el-select v-model="newCustomHttpTool.method" placeholder="Select method">
+                        <el-option label="GET" value="GET"></el-option>
+                        <el-option label="POST" value="POST"></el-option>
+                        <el-option label="PUT" value="PUT"></el-option>
+                        <el-option label="DELETE" value="DELETE"></el-option>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item :label="t('headers')">
+                      <el-input v-model="newCustomHttpTool.headers" type="textarea" :rows="4" :placeholder="t('headersPlaceholder')"></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('body')">
+                      <el-input v-model="newCustomHttpTool.body" type="textarea" :rows="20" :placeholder="t('bodyPlaceholder')"></el-input>
+                      <el-alert type="info" :closable="false">
+                        {{ t('bodyJsonSchemaFormat') }}
+                      </el-alert>
+                    </el-form-item>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="showCustomHttpToolForm = false">{{ t('cancel') }}</el-button>
+                    <el-button type="primary" @click="saveCustomHttpTool" :disabled="!newCustomHttpTool.name || !newCustomHttpTool.url">
+                      {{ editingCustomHttpTool ? t('save') : t('createImmediately') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
               <!--记忆-->
               <div v-show="subMenu === 'memory'" class="page">
                 <el-tabs v-model="activeMemoryTab">
@@ -4350,799 +4996,6 @@ if ('serviceWorker' in navigator) {
           </el-dialog>
         </div>
 
-        <div v-show="activeMenu === 'agent_group'" class="page agent-suite-container">
-          <div class="suite-layout">
-            <!-- 左侧导航 -->
-            <div class="suite-sidebar">
-              <div class="tile-nav">
-                <div 
-                  v-for="tile in agentTiles" 
-                  :key="tile.id"
-                  class="nav-item"
-                  :class="{ active: subMenu === tile.id }"
-                  @click="subMenu = tile.id">
-                  <el-icon class="nav-icon"><i :class="tile.icon"></i></el-icon>
-                  <span class="nav-text">{{ t(tile.title) }}</span>
-                </div>
-              </div>
-            </div>
-            <!-- 内容切换区 -->
-            <div class="suite-content">
-              <!-- 在agent_group的内容区添加ComfyUI配置 -->
-              <div v-show="subMenu === 'comfyui'" class="page comfyui-container">
-                <el-tabs>
-                  <!-- 配置选项卡 -->
-                  <el-tab-pane :label="t('comfyuiConfig')">
-                    <el-form class="settings-form" label-position="top">
-                      <div class="tool-item">
-                        <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center;">
-                          <span>
-                            <el-icon><i class="fa-solid fa-server"></i></el-icon>
-                            {{ t('comfyuiServers') }}
-                            <el-link
-                              type="primary"
-                              :underline="false"
-                              href="https://platform.comfy.org/profile/api-keys" 
-                              target="_blank"
-                            >
-                              <el-icon class="mr-1">
-                                <i class="fa-solid fa-key"></i>
-                              </el-icon>{{ t('gotoAPI') }}
-                            </el-link>
-                          </span>
-                        </div>
-                        <div class="tool-content">
-                          <div class="server-item">
-                            <el-input 
-                              v-model="comfyuiAPIkey" 
-                              :placeholder="t('comfyuiAPIKey')"
-                              class="full-width-input"
-                              show-password
-                              @change="autoSaveSettings"
-                            >
-                            </el-input>
-                          </div>
-                          <div v-for="(server, index) in comfyuiServers" 
-                              :key="index" 
-                              class="server-item">
-                            <el-input 
-                              v-model="comfyuiServers[index]" 
-                              placeholder="http://localhost:8188"
-                              class="full-width-input"
-                              @change="autoSaveSettings"
-                            >
-                            </el-input>
-                            <el-tooltip :content="t('connectComfyUIServer')" placement="top">
-                              <el-button 
-                                type="primary" 
-                                @click="connectComfyUI(index)" 
-                                :disabled="comfyuiServers.length === 0 || isConnecting"
-                                circle
-                              >
-                                <template v-if="isConnecting">
-                                  <i class="fa-solid fa-spinner fa-spin"></i>
-                                </template>
-                                <template v-else>
-                                  <i class="fa-solid fa-plug"></i>
-                                </template>
-                              </el-button>
-                            </el-tooltip>
-                            <el-tooltip :content="t('removeComfyUIServer')" placement="top">
-                              <el-button 
-                                v-if="index !== 0"
-                                @click="removeComfyUIServer(index)"
-                                type="danger" 
-                                circle>
-                                <i class="fa-solid fa-trash"></i>
-                              </el-button>
-                            </el-tooltip>
-                          </div>
-                          <el-button 
-                            @click="addComfyUIServer"
-                            type="primary" 
-                            plain 
-                            class="add-server-btn">
-                            <i class="fa-solid fa-plus"></i> {{ t('addServer') }}
-                          </el-button>
-                        </div>
-                      </div>
-                      <el-alert
-                          :title="t('comfyuiConfigInfo')"
-                          type="info"
-                          :closable="false"
-                          class="mb-2"
-                        >
-                          1. {{ t('comfyuiConfigInfo1') }}<br>
-                          2. {{ t('comfyuiConfigInfo2') }}<br>
-                          3. {{ t('comfyuiConfigInfo3') }}<br>
-                          4. {{ t('comfyuiConfigInfo4') }}<br>
-                      </el-alert>
-                    </el-form>
-                  </el-tab-pane>
-
-                  <!-- 展示选项卡 -->
-                  <el-tab-pane :label="t('comfyuiDisplay')">
-                    <div class="comfyui-iframe-container">
-                      <iframe 
-                        v-if="activeComfyUIUrl"
-                        :src="activeComfyUIUrl" 
-                        frameborder="0"
-                        class="comfyui-iframe"></iframe>
-                      <div v-else class="no-server-tip">
-                        <el-empty :description="t('noServerTip')" />
-                      </div>
-                    </div>
-                  </el-tab-pane>
-
-                      <!-- 新增 ComfyUI 工作流转工具选项卡 -->
-                  <el-tab-pane :label="t('comfyuiWorkflowTool')">
-                  <!-- 磁贴列表 -->
-                    <div class="provider-grid">
-                      <div v-for="file in workflows" :key="file.unique_filename" class="provider-card knowledge-card">
-                        <div class="card-header">
-                          <el-switch v-model="file.enabled" @change="autoSaveSettings"></el-switch>
-                          <div class="card-actions">
-                            <!-- 下载按钮 -->
-                            <a :href="`${partyURL}/uploaded_files/${file.unique_filename}`" download target="_blank">
-                              <el-button circle size="small" class="file-actions-btn">
-                                  <i class="fa-solid fa-download"></i>
-                              </el-button>
-                            </a>
-                            <!-- 删除按钮 -->
-                            <el-button
-                              type="danger"
-                              circle
-                              size="small"
-                              @click="deleteWorkflow(file.unique_filename)">
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                        <h3>{{ file.original_filename }}</h3>
-                        <span>{{ file.description }}</span>
-                      </div>
-                      <!-- 添加上传按钮 -->
-                      <div class="provider-card add-tile" @click="showWorkflowUploadDialog = true">
-                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                        <div style="color: #606266; margin-top: 10px;">{{ t('uploadWorkflowJson') }}</div>
-                      </div>
-                    </div>
-                  </el-tab-pane>
-                </el-tabs>
-                <!-- 工作流上传对话框 -->
-                <el-dialog
-                  v-model="showWorkflowUploadDialog"
-                  :title="t('uploadWorkflowJson')"
-                  width="600px"
-                >
-                  <div class="upload-container">
-                    <div
-                      class="drop-zone"
-                      @dragover.prevent
-                      @drop.prevent="handleWorkflowDrop"
-                      @click="browseWorkflowFile"
-                    >
-                      <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
-                      <p>{{ t('clickOrDrop') }}</p>
-                    </div>
-                    
-                    <!-- 文件列表 -->
-                    <div class="compact-file-list" v-if="workflowFile">
-                      <div class="compact-file-item">
-                        <span class="file-name">@{{ workflowFile.name }}</span>
-                        <el-button
-                          @click.stop="removeWorkflowFile"
-                          class="delete-icon"
-                          circle
-                        >
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-
-                    <div class="input-box" required>
-                      <el-input
-                        v-model="workflowDescription"
-                        type="textarea"
-                        :rows="3"
-                        :placeholder="t('descriptionPlaceholder')"
-                      />
-                    </div>
-
-                    <div class="input-box">
-                      <!-- 文字输入位置选择 -->
-                      <el-select v-model="selectedTextInput" value-key="id"  :placeholder="t('selectTextInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in textInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <div class="input-box">
-                      <!-- 文字输入位置选择 -->
-                      <el-select v-model="selectedTextInput2" value-key="id"  :placeholder="t('selectTextInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in textInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <div class="input-box">
-                      <!-- 图片输入位置选择 -->
-                      <el-select v-model="selectedImageInput" value-key="id" :placeholder="t('selectImageInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in imageInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <div class="input-box">
-                      <!-- 图片输入位置选择 -->
-                      <el-select v-model="selectedImageInput2" value-key="id" :placeholder="t('selectImageInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in imageInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <div class="input-box">
-                      <!-- 种子位置选择 -->
-                      <el-select v-model="selectedSeedInput" value-key="id" :placeholder="t('selectSeedInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in seedInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <div class="input-box">
-                      <!-- 种子位置选择 -->
-                      <el-select v-model="selectedSeedInput2" value-key="id" :placeholder="t('selectSeedInput')" class="full-width-input">
-                        <el-option
-                          v-for="(node, index) in seedInputOptions"
-                          :key="index"
-                          :label="node.label"
-                          :value="node.value"
-                        ></el-option>
-                      </el-select>
-                    </div>
-                    <el-alert
-                        type="info"
-                        :closable="false"
-                        class="mb-2"
-                      >
-                        {{ t('comfyuiWorkflowInfo') }}
-                    </el-alert>
-                  </div>
-                  <template #footer>
-                    <el-button @click="cancelWorkflowUpload">{{ t('cancel') }}</el-button>
-                    <el-button type="primary" @click="uploadWorkflow" :disabled="!workflowFile">
-                      {{ t('createImmediately') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
-              <!-- 智能体页面 -->
-              <div v-show="subMenu === 'agents'" class="page agents-container">
-                <!-- 磁贴网格 -->
-                <div class="provider-grid">
-                  <!-- 已有智能体 -->
-                  <div class="provider-card agent-card" v-for="agent in agents" :key="agent.id">
-                    <div class="card-header">
-                      <el-switch v-model="agent.enabled" @change="autoSaveSettings"></el-switch>
-                      <div class="card-actions">
-                        <!-- 更新删除按钮样式 -->
-                        <el-button @click="removeAgent(agent.id)" type="danger" circle size="small">
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-                    
-                    <div class="agent-content">
-                      <div class="agent-header">
-                        <span class="agent-name">{{ agent.name }}</span>
-                        <!-- 添加复制功能 -->
-                        <el-button
-                          size="small"
-                          type="info"
-                          @click="copyAgentName(agent.name)"
-                        >
-                          <i class="fa-regular fa-copy"></i>
-                        </el-button>
-                      </div>
-                      <!-- 带复制功能的ID展示 -->
-                      <el-tag 
-                        type="info" 
-                        size="small" 
-                        class="agent-id clickable"
-                        @click="copyAgentId(agent.id)"
-                      >
-                        {{ agent.id }}
-                        <i class="fa-regular fa-copy"></i>
-                      </el-tag>
-                      <p class="agent-prompt">{{ agent.system_prompt }}</p>
-                    </div>
-                  </div>
-                  <!-- 添加新智能体 -->
-                  <div class="provider-card add-tile" @click="showAgentForm = true;newAgent.system_prompt = this.system_prompt">
-                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewAgent') }}</div>
-                  </div>
-                </div>
-                <!-- 智能体编辑对话框 -->
-                <el-dialog v-model="showAgentForm" :title="editingAgent ? t('editAgent') : t('addAgent')" width="600px">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('agentName')" required>
-                      <el-input v-model="newAgent.name" :placeholder="t('agentNamePlaceholder')"/>
-                    </el-form-item>
-                    <el-form-item :label="t('systemPrompt')" required>
-                      <el-input 
-                        v-model="newAgent.system_prompt" 
-                        type="textarea" 
-                        :rows="6"
-                        :placeholder="t('systemPromptPlaceholder')"/>
-                    </el-form-item>
-                      <!-- 新增标签页 -->
-                      <el-tabs v-model="agentTabActive" type="border-card">
-                        <!-- 知识库 -->
-                        <el-tab-pane :label="t('knowledgeBase')" name="knowledge">
-                          <div class="knowledge-dialog-content">
-                            <div v-for="kb in knowledgeBases" :key="kb.id" class="knowledge-item">
-                              <el-switch v-model="kb.enabled" @change="autoSaveSettings"></el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ kb.name }}</div>
-                                <div class="knowledge-desc">{{ kb.introduction || t('noDescription') }}</div>
-                              </div>
-                            </div>
-                            <div v-if="knowledgeBases.length === 0" class="empty-tip">
-                              {{ t('noKnowledgeBase') }}
-                              <a href="#" @click.stop.prevent="switchToKnowledgePage">{{ t('goToKnowledgeBase') }}</a>
-                              {{ t('add') }}
-                            </div>
-                          </div>
-                        </el-tab-pane>
-                        <!-- MCP服务器 -->
-                        <el-tab-pane :label="t('mcpServers')" name="mcp">
-                          <div class="knowledge-dialog-content">
-                            <!-- 服务器列表 -->
-                            <div v-for="(server, name) in mcpServers" :key="name" class="knowledge-item">
-                              <el-switch 
-                                :active-value="false"  
-                                :inactive-value="true" 
-                                v-model="server.disabled" 
-                                @change="autoSaveSettings">
-                              </el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ name }}</div>
-                              </div>
-                            </div>
-                            <div v-if="Object.keys(mcpServers).length === 0" class="empty-tip">
-                              {{ t('nomcpServers') }}
-                              <a href="#" @click.stop.prevent="switchTomcpServers">{{ t('goTomcpServers') }}</a>
-                              {{ t('add') }}
-                            </div>
-                          </div>
-                        </el-tab-pane>
-                        <!-- A2A服务器 -->
-                        <el-tab-pane :label="t('a2aServers')" name="a2a">
-                          <div class="knowledge-dialog-content">
-                            <div v-for="(server, url) in a2aServers" :key="url" class="knowledge-item">
-                              <el-switch v-model="server.enabled" @change="autoSaveSettings"></el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ server.name }}</div>
-                                <div class="knowledge-desc">{{ server.description }}</div>
-                              </div>
-                            </div>
-                            <div v-if="Object.keys(a2aServers).length === 0" class="empty-tip">
-                              {{ t('noA2AServers') }}
-                              <a href="#" @click.stop.prevent="switchToa2aServers">{{ t('addA2AServer') }}</a>
-                              {{ t('add') }}
-                            </div>
-                          </div>
-                        </el-tab-pane>
-                        <!-- 工具 -->
-                        <el-tab-pane :label="t('tools')" name="tools">
-                          <div class="knowledge-dialog-content">
-                            <div class="knowledge-item">
-                              <el-switch v-model="webSearchSettings.enabled" @change="autoSaveSettings"></el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ t('webSearch') }}</div>
-                              </div>
-                            </div>
-                            <div class="knowledge-item">
-                              <el-switch v-model="reasonerSettings.enabled" @change="autoSaveSettings"></el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ t('deepThinking') }}</div>
-                              </div>
-                            </div>
-                            <div class="knowledge-item">
-                              <el-switch v-model="toolsSettings.deepsearch.enabled" @change="autoSaveSettings"></el-switch>
-                              <div class="knowledge-info">
-                                <div class="knowledge-name">{{ t('deepResearch') }}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </el-tab-pane>
-                      </el-tabs>
-                  </el-form>
-                  <el-alert
-                    type="info"
-                    :closable="false"
-                    class="mb-2"
-                  >
-                    <template #default>
-                      <div class="alert-content">
-                        {{ t('agentInfo') }}
-                      </div>
-                    </template>
-                  </el-alert>
-                  <template #footer>
-                    <el-button @click="showAgentForm = false">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="saveAgent"
-                      :disabled="!newAgent.name || !newAgent.system_prompt">
-                      {{ t('createAgent') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
-              <!-- A2A页面 -->
-              <div v-show="subMenu === 'a2a'" class="page a2a-container">
-                <div class="provider-grid">
-                  <div class="provider-card a2a-card" v-for="(server, url) in a2aServers" :key="url">
-                    <div class="card-header">
-                      <template v-if="server.status === 'initializing'">
-                        <el-icon class="loading-spinner">
-                          <i class="fa-solid fa-spinner"></i>
-                        </el-icon>
-                      </template>
-                      <template v-else>
-                        <el-switch v-model="server.enabled" @change="autoSaveSettings"></el-switch>
-                      </template>
-                      <div class="card-actions">
-                        <el-button @click="removeA2AServer(url)" type="danger" circle size="small">
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-                    <div class="a2a-content">
-                      <h3 class="a2a-name">{{ server.name }}</h3>
-                      <p class="a2a-description">{{ server.description }}</p>
-                      <div class="a2a-skills">
-                        <el-tag v-for="(skill, index) in server.skills" :key="index" type="info" size="small">
-                          {{ skill }}
-                        </el-tag>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="provider-card add-tile" @click="showAddA2ADialog = true">
-                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                    <div style="color: #606266; margin-top: 10px;">{{ t('addA2AServer') }}</div>
-                  </div>
-                </div>
-            
-                <!-- 添加A2A服务器对话框 -->
-                <el-dialog v-model="showAddA2ADialog" :title="t('addA2AServer')" width="500px" label-position="top">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('A2AUrl')" required>
-                      <el-input v-model="newA2AUrl" placeholder="http://127.0.0.1:5000"></el-input>
-                    </el-form-item>
-                  </el-form>
-                  <template #footer>
-                    <el-button @click="showAddA2ADialog = false">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="addA2AServer"
-                      :disabled="!isValidUrl(newA2AUrl)">
-                      {{ t('confirmAdd') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
-              <!-- MCP页面 -->
-              <div v-show="subMenu === 'mcp'" class="page mcp-container">
-                <!-- 磁贴网格 -->
-                <div class="provider-grid">
-                  <div class="provider-card knowledge-card" v-for="(server, name) in mcpServers" :key="name">
-                    <div class="card-header">
-                      <!-- 加载状态指示 -->
-                      <template v-if="server.processingStatus === 'initializing'">
-                        <el-icon class="loading-spinner">
-                          <i class="fa-solid fa-spinner"></i>
-                        </el-icon>
-                      </template>
-                      <template v-else>
-                        <el-switch
-                          :active-value="false"  
-                          :inactive-value="true" 
-                          v-model="server.disabled"
-                          @change="autoSaveSettings"
-                          class="kb-switch"
-                          :disabled="server.processingStatus === 'server_error'"
-                        ></el-switch>
-                      </template>
-                      <div class="card-actions">
-                        <el-button
-                          @click="restartMCPServer(name)"
-                          type="info"
-                          circle
-                          size="small"
-                        >
-                          <i class="fa-solid fa-rotate-right"></i>
-                        </el-button>
-                        <el-button
-                          @click="editMCPServer(name)"
-                          type="primary"
-                          circle
-                          size="small"
-                        >
-                          <i class="fa-solid fa-pen-to-square"></i>
-                        </el-button>
-                        <el-button
-                          @click="removeMCPServer(name)"
-                          type="danger"
-                          circle
-                          size="small"
-                        >
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-                    <div class="kb-content">
-                      <div class="kb-header">
-                        <h3 class="kb-title">{{ name }}</h3>
-                      </div>
-                    </div>
-                  </div>
-            
-                  <!-- 添加新磁贴 -->
-                  <div class="provider-card add-tile" @click="showAddMCPDialog = true; this.newMCPJson = '';updateMCPExample()">
-                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewMCP') }}</div>
-                  </div>
-                </div>
-
-                <!-- 添加MCP对话框 -->
-                <el-dialog
-                  v-model="showAddMCPDialog"
-                  :title="t('addNewMCP')"
-                  width="600px"
-                  @closed="newMCPJson = ''">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('serverType')">
-                      <el-select 
-                        v-model="newMCPType" 
-                        @change="updateMCPExample"
-                        class="full-width-input">
-                        <el-option 
-                          :label="t('stdioServer')" 
-                          value="stdio">
-                        </el-option>
-                        <el-option
-                          :label="t('sseServer')"
-                          value="sse">
-                        </el-option>
-                        <el-option
-                          :label="t('wsServer')"
-                          value="ws">
-                        </el-option>
-                        <el-option
-                          :label="t('streamableHttpServer')"
-                          value="streamablehttp">
-                        </el-option>
-                      </el-select>
-                    </el-form-item>
-                
-                    <el-alert type="info" :closable="false" class="mb-2">
-                      {{ t('mcpJsonFormat') }}
-                      <pre class="json-example">{{ currentMCPExample }}</pre>
-                    </el-alert>
-                
-                    <el-form-item :label="t('mcpJsonInput')">
-                      <el-input
-                        v-model="newMCPJson"
-                        type="textarea"
-                        :rows="8"
-                        :placeholder="t('mcpJsonPlaceholder')"
-                        resize="none"/>
-                    </el-form-item>
-                  </el-form>
-                  <template #footer>
-                    <el-button @click="showAddMCPDialog = false; this.newMCPJson = ''">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="addMCPServer"
-                      :disabled="!newMCPJson">
-                      {{ t('confirmAdd') }}
-                    </el-button>
-                  </template>
-                </el-dialog>          
-                <el-dialog
-                  v-model="showMCPConfirm"
-                  :title="t('confirmDeleteTitle')"
-                  width="400px"
-                  @closed="deletingMCPName = null">
-                  <div class="confirm-content">
-                    <p>{{ t('confirmDeleteMCP', { name: deletingMCPName }) }}</p>
-                    <div class="confirm-buttons">
-                      <el-button @click="showMCPConfirm = false">{{ t('cancel') }}</el-button>
-                      <el-button type="danger" @click="confirmDeleteMCP">{{ t('confirm') }}</el-button>
-                    </div>
-                  </div>
-                </el-dialog>
-              </div>
-              <!-- LLM工具页面 -->
-              <div v-show="subMenu === 'llmTool'" class="page llm-tool-container">
-                <!-- 磁贴网格 -->
-                <div class="provider-grid">
-                  <!-- 已有LLM工具配置 -->
-                  <div class="provider-card llm-card" v-for="(tool, id) in llmTools" :key="id">
-                    <div class="card-header">
-                      <el-switch v-model="tool.enabled" @change="autoSaveSettings"></el-switch>
-                      <div class="card-actions">
-                        <el-button @click="removeLLMTool(id)" type="danger" circle size="small">
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-                    <div class="llm-content">
-                      <h3 class="knowledge-info">{{ tool.name }}</h3>
-                      <el-tag type="info" size="small">{{ toolTypeLabel(tool.type) }}</el-tag>
-                      <p class="knowledge-desc">{{ tool.description || t('noDescription') }}</p>
-                    </div>
-                  </div>
-                  
-                  <!-- 添加新LLM工具 -->
-                  <div class="provider-card add-tile" @click="showLLMForm = true">
-                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                    <div style="color: #606266; margin-top: 10px;">{{ t('addLLMTool') }}</div>
-                  </div>
-                </div>
-
-                <!-- 添加/编辑LLM工具对话框 -->
-                <el-dialog v-model="showLLMForm" :title="editingLLM ? t('editLLMTool') : t('addLLMTool')" width="600px">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('toolName')" required>
-                      <el-input v-model="newLLMTool.name" :placeholder="t('toolNamePlaceholder')"/>
-                    </el-form-item>
-
-                    <el-form-item :label="t('interfaceType')" required>
-                      <el-select 
-                        v-model="newLLMTool.type" 
-                        @change="handleTypeChange"
-                        filterable
-                        allow-create
-                        :placeholder="t('selectInterfaceType')">
-                        <el-option
-                          v-for="type in llmInterfaceTypes"
-                          :key="type.value"
-                          :label="type.label"
-                          :value="type.value"
-                        />
-                      </el-select>
-                    </el-form-item>
-
-                    <el-form-item :label="t('description')" required>
-                      <el-input
-                        v-model="newLLMTool.description"
-                        type="textarea"
-                        :rows="3"
-                        :placeholder="t('descriptionPlaceholder')"
-                      />
-                    </el-form-item>
-
-                    <el-form-item :label="t('baseURL')" required>
-                      <el-input
-                        v-model="newLLMTool.base_url"
-                        :placeholder="defaultBaseURL"
-                      />
-                    </el-form-item>
-
-                    <el-form-item :label="t('apiKey')" required>
-                      <el-input
-                        v-model="newLLMTool.api_key"
-                        show-password
-                      />
-                    </el-form-item>
-
-                    <el-form-item :label="t('modelName')" required>
-                      <el-input
-                        v-model="newLLMTool.model"
-                      >
-                      </el-input>
-                    </el-form-item>
-                  </el-form>
-
-                  <template #footer>
-                    <el-button @click="cancelLLMTool">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="saveLLMTool"
-                      :disabled="!formValid">
-                      {{ editingLLM ? t('save') : t('createImmediately') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
-              <!-- 自定义HTTP工具页面 -->
-              <div v-show="subMenu === 'customHttpTool'" class="page custom-http-tool-container">
-                <!-- 磁贴网格 -->
-                <div class="provider-grid">
-                  <div class="provider-card custom-http-tool-card" v-for="tool in customHttpTools" :key="tool.id">
-                    <div class="card-header">
-                      <el-switch v-model="tool.enabled" @change="autoSaveSettings"></el-switch>
-                      <div class="card-actions">
-                        <el-button @click="editCustomHttpTool(tool.id)" type="default" circle size="small">
-                          <i class="fa-solid fa-pen-to-square"></i>
-                        </el-button>
-                        <el-button @click="removeCustomHttpTool(tool.id)" type="danger" circle size="small">
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
-                      </div>
-                    </div>
-                    <div class="custom-http-tool-content">
-                      <h3 class="custom-http-tool-name">{{ tool.name }}</h3>
-                      <p class="custom-http-tool-description">{{ tool.description }}</p>
-                    </div>
-                  </div>
-                  <!-- 添加新自定义HTTP工具 -->
-                  <div class="provider-card add-tile" @click="showCustomHttpToolForm = true">
-                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                    <div style="color: #606266; margin-top: 10px;">{{ t('addCustomHttpTool') }}</div>
-                  </div>
-                </div>
-
-                <!-- 添加/编辑自定义HTTP工具对话框 -->
-                <el-dialog v-model="showCustomHttpToolForm" :title="editingCustomHttpTool ? t('editCustomHttpTool') : t('addCustomHttpTool')" width="600px">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('toolName')" required>
-                      <el-input v-model="newCustomHttpTool.name" :placeholder="t('HTTPNamePlaceholder')"></el-input>
-                    </el-form-item>
-                    <el-form-item :label="t('description')" required>
-                      <el-input v-model="newCustomHttpTool.description" type="textarea" :rows="3" :placeholder="t('descriptionPlaceholder')"></el-input>
-                    </el-form-item>
-                    <el-form-item :label="t('URL')" required>
-                      <el-input v-model="newCustomHttpTool.url" :placeholder="t('urlPlaceholder')"></el-input>
-                    </el-form-item>
-                    <el-form-item :label="t('method')" required>
-                      <el-select v-model="newCustomHttpTool.method" placeholder="Select method">
-                        <el-option label="GET" value="GET"></el-option>
-                        <el-option label="POST" value="POST"></el-option>
-                        <el-option label="PUT" value="PUT"></el-option>
-                        <el-option label="DELETE" value="DELETE"></el-option>
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item :label="t('headers')">
-                      <el-input v-model="newCustomHttpTool.headers" type="textarea" :rows="4" :placeholder="t('headersPlaceholder')"></el-input>
-                    </el-form-item>
-                    <el-form-item :label="t('body')">
-                      <el-input v-model="newCustomHttpTool.body" type="textarea" :rows="20" :placeholder="t('bodyPlaceholder')"></el-input>
-                      <el-alert type="info" :closable="false">
-                        {{ t('bodyJsonSchemaFormat') }}
-                      </el-alert>
-                    </el-form-item>
-                  </el-form>
-                  <template #footer>
-                    <el-button @click="showCustomHttpToolForm = false">{{ t('cancel') }}</el-button>
-                    <el-button type="primary" @click="saveCustomHttpTool" :disabled="!newCustomHttpTool.name || !newCustomHttpTool.url">
-                      {{ editingCustomHttpTool ? t('save') : t('createImmediately') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
-            </div>
-          </div>
-        </div>
         <!-- 在内容区添加存储空间界面 -->
         <div v-show="activeMenu === 'storage'" class="page storage-container">
           <div class="suite-layout">
@@ -6446,6 +6299,89 @@ if ('serviceWorker' in navigator) {
             </div>
             <!-- 右侧内容 -->
             <div class="suite-content">
+              <!-- 智能体页面 -->
+              <div v-show="subMenu === 'agents'" class="page agents-container">
+                <!-- 磁贴网格 -->
+                <div class="provider-grid">
+                  <!-- 已有智能体 -->
+                  <div class="provider-card agent-card" v-for="agent in agents" :key="agent.id">
+                    <div class="card-header">
+                      <el-switch v-model="agent.enabled" @change="autoSaveSettings"></el-switch>
+                      <div class="card-actions">
+                        <!-- 更新删除按钮样式 -->
+                        <el-button @click="removeAgent(agent.id)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    
+                    <div class="agent-content">
+                      <div class="agent-header">
+                        <span class="agent-name">{{ agent.name }}</span>
+                        <!-- 添加复制功能 -->
+                        <el-button
+                          size="small"
+                          type="info"
+                          @click="copyAgentName(agent.name)"
+                        >
+                          <i class="fa-regular fa-copy"></i>
+                        </el-button>
+                      </div>
+                      <!-- 带复制功能的ID展示 -->
+                      <el-tag 
+                        type="info" 
+                        size="small" 
+                        class="agent-id clickable"
+                        @click="copyAgentId(agent.id)"
+                      >
+                        {{ agent.id }}
+                        <i class="fa-regular fa-copy"></i>
+                      </el-tag>
+                      <p class="agent-prompt">{{ agent.system_prompt }}</p>
+                    </div>
+                  </div>
+                  <!-- 添加新智能体 -->
+                  <div class="provider-card add-tile" @click="showAgentForm = true;newAgent.system_prompt = this.system_prompt">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewAgent') }}</div>
+                  </div>
+                </div>
+                <!-- 智能体编辑对话框 -->
+                <el-dialog v-model="showAgentForm" :title="editingAgent ? t('editAgent') : t('addAgent')" width="600px">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('agentName')" required>
+                      <el-input v-model="newAgent.name" :placeholder="t('agentNamePlaceholder')"/>
+                    </el-form-item>
+                    <el-form-item :label="t('systemPrompt')" required>
+                      <el-input 
+                        v-model="newAgent.system_prompt" 
+                        type="textarea" 
+                        :rows="6"
+                        :placeholder="t('systemPromptPlaceholder')"/>
+                    </el-form-item>
+                  </el-form>
+                  <el-alert
+                    type="info"
+                    :closable="false"
+                    class="mb-2"
+                  >
+                    <template #default>
+                      <div class="alert-content">
+                        {{ t('agentInfo') }}
+                      </div>
+                    </template>
+                  </el-alert>
+                  <template #footer>
+                    <el-button @click="showAgentForm = false">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="saveAgent"
+                      :disabled="!newAgent.name || !newAgent.system_prompt">
+                      {{ t('createAgent') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
               <!-- OpenAI风格API -->
               <div v-show="subMenu === 'openai'" class="page">
                 <el-form class="settings-form">

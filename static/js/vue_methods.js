@@ -176,15 +176,15 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     switchTollmTools() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'llmTool';
     },
     switchToHttpTools() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'customHttpTool';
     },
     switchToComfyui() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'comfyui';
     },
     switchToStickerPacks() {
@@ -358,11 +358,11 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     switchToagents() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'api-group';
       this.subMenu = 'agents';
     },
     switchToa2aServers() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'a2a';
     },
     async syncProviderConfig(targetConfig) {
@@ -404,7 +404,7 @@ let vue_methods = {
       this.autoSaveSettings()
     },
     switchTomcpServers() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'mcp'
     },
     // 窗口控制
@@ -418,11 +418,7 @@ let vue_methods = {
       if (isElectron) window.electronAPI.windowAction('close');
     },
     async handleSelect(key) {
-      if (key === 'agent_group') {
-        this.activeMenu = 'agent_group';
-        this.subMenu = 'agents'; // 默认显示第一个子菜单
-      }
-      else if (key === 'model-config') {
+      if (key === 'model-config') {
         this.activeMenu = 'model-config';
         this.subMenu = 'service'; // 默认显示第一个子菜单
       }
@@ -2044,7 +2040,9 @@ let vue_methods = {
     // 主模型供应商选择
     async selectMainProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
+      console.log(provider)
       if (provider) {
+        console.log("provider")
         this.settings.model = provider.modelId;
         this.settings.base_url = provider.url;
         this.settings.api_key = provider.apiKey;
