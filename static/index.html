@@ -4006,6 +4006,20 @@ if ('serviceWorker' in navigator) {
                             clearable
                             class="full-width-input"
                           >
+                            <!-- 添加“无”选项，默认选中 -->
+                            <el-option
+                              :key="'none'"
+                              :label="t('none')"
+                              :value="null"
+                            >
+                              <div class="provider-option">
+                                <img 
+                                  src="source/providers/custom.png" 
+                                  class="mini-vendor-logo"
+                                />
+                                <span class="model-id">{{ t("NoLongTermMemory") }}</span>
+                              </div>
+                            </el-option>
                             <el-option
                               v-for="p in modelProviders"
                               :key="p.id"
