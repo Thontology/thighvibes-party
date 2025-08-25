@@ -3997,9 +3997,7 @@ if ('serviceWorker' in navigator) {
                       <!-- 自动更新设定（供应商） -->
                       <el-tab-pane name="autoUpdateSetting">
                         <template #label>
-                          <el-tooltip :content="t('autoUpdateNote')" placement="top">
-                            <span>{{ t('autoUpdateSetting') }}</span>
-                          </el-tooltip>
+                          <span>{{ t('autoUpdateSetting') }}</span>
                         </template>
                         <el-form-item :label="t('embeddingProvider')">
                           <el-select
