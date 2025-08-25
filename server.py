@@ -232,7 +232,7 @@ app.add_middleware(
 async def t(text: str) -> str:
     global locales
     settings = await load_settings()
-    target_language = settings["systemSettings"]["language"]
+    target_language = settings["currentLanguage"]
     return locales[target_language].get(text, text)
 
 
@@ -308,6 +308,7 @@ async def get_image_content(image_url: str) -> str:
 
 async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str | List | None:
     global mcp_client_list,_TOOL_HOOKS,HA_client,ChromeMCP_client
+    print("dispatch_tool",tool_name,tool_params)
     from py.web_search import (
         DDGsearch_async, 
         searxng_async, 
@@ -1513,6 +1514,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     yield f"data: {json.dumps(final_chunk)}\n\n"
                     full_content += final_chunk["choices"][0]["delta"].get("content", "")
                 if tool_calls:
+                    print("tool_calls",tool_calls)
                     pass
                 elif settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                     search_prompt = get_drs_stage_system_message(DRS_STAGE,user_prompt,full_content)
@@ -1673,6 +1675,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     full_content = ""
                     if tool_calls:
                         response_content = tool_calls[0].function
+                        print(response_content)
                         if response_content.name in  ["DDGsearch_async","searxng_async", "Bing_search_async", "Google_search_async", "Brave_search_async", "Exa_search_async", "Serper_search_async","bochaai_search_async"]:
                             chunk_dict = {
                                 "id": "agentParty",

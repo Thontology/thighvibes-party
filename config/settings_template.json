@@ -257,5 +257,6 @@
       "github_branch": "main"
     },
     "workflows": [],
-    "stickerPacks": []
+    "stickerPacks": [],
+    "currentLanguage": "zh-CN"
 }
