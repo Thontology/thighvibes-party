@@ -3932,6 +3932,16 @@ if ('serviceWorker' in navigator) {
                               class="full-width-input"
                             />
                           </el-form-item>
+                          <el-form-item :label="t('genericSystemPrompt')" class="form-item-align">
+                            <el-input
+                              v-model="memorySettings.genericSystemPrompt"
+                              :placeholder="t('genericSystemPromptPlaceholder')"
+                              type="textarea"
+                              :rows="3"
+                              @input="autoSaveSettings"
+                              class="full-width-input"
+                            />
+                          </el-form-item>
                         </div>
                       </div>
                     </el-form>
@@ -3999,8 +4009,10 @@ if ('serviceWorker' in navigator) {
                               :label="p.vendor + ' - ' + p.modelId"
                               :value="p.id"
                             >
-                              <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
-                              <span class="model-id">{{ p.modelId }}</span>
+                              <div class="provider-option">
+                                <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
+                                <span class="model-id">{{ p.modelId }}</span>
+                              </div>
                             </el-option>
                           </el-select>
                         </el-form-item>

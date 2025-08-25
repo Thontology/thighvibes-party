@@ -956,6 +956,17 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
+            if settings["memorySettings"]["genericSystemPrompt"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换settings["memorySettings"]["genericSystemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
+                    settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
+                settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
+                print("添加系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"})
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
                 try:
@@ -2517,7 +2528,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         user_prompt = request.messages[-1]['content']
         if settings["memorySettings"]["is_memory"]:
             if settings["memorySettings"]["userName"]:
-                print("添加用户名：\n\n" + lore_content + "\n\n用户名结束\n\n")
+                print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
                 if request.messages and request.messages[0]['role'] == 'system':
                     request.messages[0]['content'] += "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"
                 else:
@@ -2563,7 +2574,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["personality"]中的{{user}}为settings["memorySettings"]["userName"]
-                    cur_memory["personality"] = cur_memory["personality"].replace("{{user}", settings["memorySettings"]["userName"])
+                    cur_memory["personality"] = cur_memory["personality"].replace("{{user}}", settings["memorySettings"]["userName"])
                 # 替换cur_memory["personality"]中的{{char}}为cur_memory["name"]
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
                 print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
@@ -2593,6 +2604,18 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
+            if settings["memorySettings"]["genericSystemPrompt"]:
+                if settings["memorySettings"]["userName"]:
+                    # 替换settings["memorySettings"]["genericSystemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
+                    settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{user}}", settings["memorySettings"]["userName"])
+                # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
+                settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
+                print("添加系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
+                if request.messages and request.messages[0]['role'] == 'system':
+                    request.messages[0]['content'] += "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"
+                else:
+                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"})
+                    
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
                 try:
