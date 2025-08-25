@@ -2905,6 +2905,7 @@ let vue_methods = {
 
         /* 酒馆 V3 字段 */
         description:   this.newMemory.description,
+        avatar:      this.newMemory.avatar,
         personality:   this.newMemory.personality,
         mesExample:    this.newMemory.mesExample,
         systemPrompt:  this.newMemory.systemPrompt,
@@ -3313,6 +3314,7 @@ let vue_methods = {
         api_key: '',
         vendor: '',
         description: '',
+        avatar: '',
         personality: '',
         mesExample: '',
         systemPrompt: '',
@@ -3336,6 +3338,7 @@ let vue_methods = {
 
           /* 旧→新 */
           description: src.basic_character || src.description || '',
+          avatar: src.avatar || '',
           personality: src.personality || '',
           mesExample: src.mesExample || '',
           systemPrompt: src.systemPrompt || '',
@@ -3772,6 +3775,7 @@ let vue_methods = {
         spec_version: '3.0',
         name: memory.name,
         description: memory.description || '',
+        avatar: memory.avatar || '',
         personality: memory.personality || '',
         mes_example: memory.mesExample || '',
         first_mes: memory.firstMes || '',
@@ -3904,6 +3908,7 @@ let vue_methods = {
         ...this.newMemory,                      // 保持 providerId 等旧字段
         name: data.name || '',
         description: data.description || '',
+        avatar: data.avatar || '',
         personality: data.personality || '',
         mesExample: data.mes_example || '',
         systemPrompt: data.system_prompt || '',

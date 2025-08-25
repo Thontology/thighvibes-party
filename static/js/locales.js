@@ -707,6 +707,8 @@ key3`,
         'userNamePlaceholder': '请输入用户名，这决定了角色如何称呼你',
         'genericSystemPrompt': '通用系统提示',
         'genericSystemPromptPlaceholder': '请输入通用系统提示，例如：总是使用用户使用的语言与之交流',
+        'avatar': '头像',
+        'avatarPlaceholder': '请输入头像链接或者本地文件绝对路径，例如：https://example.com/avatar.png 或 /Users/username/avatar.png 或 C:\\Users\\username\\avatar.png',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1413,5 +1415,7 @@ Key3`,
         'userNamePlaceholder': 'Please enter a user name, which determines how the character addresses you',
         'genericSystemPrompt': 'Generic System Prompt',
         'genericSystemPromptPlaceholder': 'Please enter a generic system prompt, for example: Always communicate with the user in the language they use',
+        'avatar': 'Avatar',
+        'avatarPlaceholder': 'Please enter the avatar link or the absolute path to the local file, for example: https://example.com/avatar.png or /Users/username/avatar.png or C:\\ Users\\ username\\ avatar.png',
     }
   };
