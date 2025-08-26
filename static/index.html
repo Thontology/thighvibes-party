@@ -622,48 +622,55 @@ if ('serviceWorker' in navigator) {
             </div>
           </el-dialog>
           <el-dialog
-            v-model="showHttpToolDialog"
-            :title="t('HttpToolsManagement')"
-            width="600px">
-            <div class="knowledge-dialog-content">
-              <div v-for="(tool, index) in customHttpTools" :key="index" class="knowledge-item">
-                <el-switch v-model="tool.enabled" @change="autoSaveSettings"></el-switch>
-                <div class="knowledge-info">
-                  <div class="knowledge-name">{{ tool.name }}</div>
-                  <div class="knowledge-desc">{{ tool.description || t('noDescription') }}</div>
-                </div>
-                <el-button 
-                  @click="removeCustomHttpTool(tool.id)" 
-                  type="danger" 
-                  circle 
-                  size="small">
-                  <i class="fa-solid fa-trash"></i>
-                </el-button>
-              </div>
-              <div v-if="customHttpTools.length === 0" class="empty-tip">
-                {{ t('noHttpTools') }}
-                <a href="#" @click.stop.prevent="switchToHttpTools">{{ t('goHttpTools') }}</a>
-                {{ t('add') }}
-              </div>
-            </div>
-          </el-dialog>
-          <el-dialog
             v-model="showHistoryDialog"
             :title="t('chatHistory')"
             width="600px">
             <div class="knowledge-dialog-content">
-              <!-- 添加搜索框 -->
-              <el-input
+              <!-- 搜索框与操作按钮行 -->
+              <div class="search-action-row">
+                <el-input
                   v-model="searchKeyword"
                   :placeholder="t('searchChatHistoryPlaceholder')"
                   clearable
-                  class="search-input">
+                  class="search-input"
+                  style="flex:1">
                   <template #prefix>
-                      <el-icon><i class="fa-solid fa-magnifying-glass"></i></el-icon>
+                    <el-icon><i class="fa-solid fa-magnifying-glass"></i></el-icon>
                   </template>
-              </el-input>
+                </el-input>
 
-              <!-- 修改后的对话记录列表 -->
+                <div class="action-buttons">
+                  <el-tooltip 
+                    :content="t('keepLastWeek')" 
+                    placement="top"
+                    :disabled="conversations.length === 0">
+                    <el-button 
+                      type="info"
+                      circle 
+                      size="small"
+                      @click="keepLastWeek"
+                      :disabled="conversations.length === 0">
+                      <i class="fa-solid fa-calendar-week"></i>
+                    </el-button>
+                  </el-tooltip>
+
+                  <el-tooltip 
+                    :content="t('clearAllHistory')" 
+                    placement="top"
+                    :disabled="conversations.length === 0">
+                    <el-button 
+                      type="danger"
+                      circle 
+                      size="small"
+                      @click="confirmClearAll"
+                      :disabled="conversations.length === 0">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </el-button>
+                  </el-tooltip>
+                </div>
+              </div>
+
+              <!-- 对话记录列表 -->
               <div v-for="conv in filteredConversations" 
                   :key="conv.id" 
                   class="knowledge-item"
@@ -685,12 +692,15 @@ if ('serviceWorker' in navigator) {
                   </div>
                 </div>
               </div>
-              <!-- 如果没有对话记录 -->
+
+              <!-- 空状态提示 -->
               <div v-if="filteredConversations.length === 0" class="empty-tip">
-                  {{ searchKeyword ? t('noResults') : t('noChatHistory') }}
+                {{ searchKeyword ? t('noResults') : t('noChatHistory') }}
               </div>
             </div>
           </el-dialog>
+
+          
           <div class="button-group">
             <el-tooltip :content="t('clearChat')" placement="top">
               <el-button
@@ -706,6 +716,7 @@ if ('serviceWorker' in navigator) {
                 <el-button 
                     @click="toggleInputExpand"
                     class="icon-btn expand-btn"
+                    v-if="!isBtnCollapse"
                     :type="isInputExpanded ? 'primary' : 'default'"
                     circle>
                     <i :class="isInputExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center'"></i>

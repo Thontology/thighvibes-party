@@ -3117,9 +3117,6 @@ body {
   }
 }
 
-.search-input {
-  margin-bottom: 10px;
-}
 .fastapi-iframe {
   min-height: 85vh!important;
 }
@@ -3154,4 +3151,26 @@ body {
 /* 保持按钮之间的间距不变 */
 .tts-controls .el-button {
   margin: 0; /* 移除默认边距 */
+}
+
+/* 修改搜索操作行样式 */
+.search-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  width: 100%; /* 新增 */
+}
+
+/* 确保搜索框可以收缩 */
+.search-input {
+  flex: 1 1 auto; /* 允许缩小 */
+  min-width: 200px; /* 保留最小宽度 */
+}
+
+/* 调整按钮容器 */
+.action-buttons {
+  flex-shrink: 0; /* 禁止按钮收缩 */
+  display: flex; /* 水平排列按钮 */
+  margin: 0px;
 }

@@ -8,7 +8,6 @@ import socket
 import sys
 import tempfile
 import threading
-import wave
 import aiohttp
 import httpx
 from scipy.io import wavfile
@@ -24,11 +23,8 @@ import asyncio
 import copy
 from functools import partial
 import json
-import random
 import re
 import shutil
-import signal
-from urllib.parse import urlparse
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, WebSocket, Request, WebSocketDisconnect
 from fastapi_mcp import FastApiMCP
 import logging
@@ -43,8 +39,7 @@ import time
 from typing import Any, List, Dict,Optional
 import shortuuid
 from py.mcp_clients import McpClient
-from contextlib import asynccontextmanager,suppress
-import requests
+from contextlib import asynccontextmanager
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 

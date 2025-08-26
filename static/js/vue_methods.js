@@ -1046,10 +1046,10 @@ let vue_methods = {
           this.changeMemory();
           // this.target_lang改成navigator.language || navigator.userLanguage;
           this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
-          await this.loadDefaultModels();
-          await this.loadDefaultMotions();
+          this.loadDefaultModels();
+          this.loadDefaultMotions();
           if (this.asrSettings.enabled) {
-            await this.startASR();
+            this.startASR();
           }
         } 
         else if (data.type === 'settings_saved') {
@@ -1545,7 +1545,8 @@ let vue_methods = {
     async translateMessage(index) {
         const msg = this.messages[index];
         const originalContent = msg.content;
-
+        if (msg.isTranslating) return;
+        if (originalContent.trim() === '') return;
         // 直接修改原消息状态
         this.messages[index] = {
             ...msg,
@@ -1634,9 +1635,6 @@ let vue_methods = {
                 this.messages[index].content = `Translation error: ${error.message}`;
                 this.messages[index].isTranslating = false;
             }
-        } finally {
-            this.abortController = null;
-            this.isTyping = false;
         }
     },
     stopGenerate() {
@@ -6050,5 +6048,39 @@ let vue_methods = {
     }
     
     return motion;
+  },
+
+  async confirmClearAll() {
+    try {
+      await this.$confirm(this.t('confirmClearAllHistory'), this.t('warning'), {
+        confirmButtonText: this.t('confirm'),
+        cancelButtonText: this.t('cancel'),
+        type: 'warning'
+      });
+      
+      this.conversations = [];
+      await this.autoSaveSettings();
+    } catch (error) {
+      // 用户取消操作
+    }
+  },
+
+  async keepLastWeek() {
+    try {
+      await this.$confirm(this.t('confirmKeepLastWeek'), this.t('warning'), {
+        confirmButtonText: this.t('confirm'),
+        cancelButtonText: this.t('cancel'),
+        type: 'warning'
+      });
+
+      const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      this.conversations = this.conversations.filter(conv => 
+        conv.timestamp && conv.timestamp >= oneWeekAgo
+      );
+      
+      await this.autoSaveSettings();
+    } catch (error) {
+      // 用户取消操作
+    }
   },
 }
