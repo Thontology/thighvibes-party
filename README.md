@@ -34,28 +34,28 @@
 
 ## Software Screenshots
 
-### Multi-Vendor Support: Supports both locally deployed engines and cloud vendor interfaces  
-![image](doc/image/model.jpeg)  
+### Multi-Service Provider Support: Supports both locally deployed engines (e.g., Ollama, Dify) and cloud service provider APIs.
+![image](doc/image/model.jpeg)
 
-### Massive tools: support asynchronous calls without blocking agent replies
+### Extensive Tool Integration: Built-in various tools (e.g., knowledge base, web search, smart home control, browser automation), supporting asynchronous invocation without blocking agent responses.
 ![image](doc/image/HA.jpeg)
 
-### VRM desktop companion: Supports uploading custom VRM models to create a personalized desktop companion  
-![image](doc/image/vrmbot.jpeg)  
+### VRM Desktop Pet: Supports uploading custom VRM models to create a personalized desktop companion.
+![image](doc/image/vrmbot.jpeg)
 
-### Memory Module: Supports permanent memory and lorebook world-building  
-![image](doc/image/memory.jpeg)  
+### Tavern Character Cards: Supports Tavern character cards with long-term memory capabilities.
+![image](doc/image/card.jpeg)
 
-### WeChat bot: Simulate user operations, take over your WeChat in a non-intrusive way, and avoid risk control
+### WeChat Bot: Non-intrusively takes control of your WeChat by simulating user operations, minimizing the risk of account restrictions.
 ![image](doc/image/wxbot.jpeg)
 
-### QQ Bot: Supports one-click deployment to the official QQ bot, enabling users to access the agent anytime, anywhere  
-![image](doc/image/qqbot.jpeg)  
+### QQ Bot: Supports one-click deployment to the official QQ bot platform, enabling users to access the agent anytime, anywhere.
+![image](doc/image/qqbot.jpeg)
 
-### Developer-Friendly: Open OpenAI API and MCP interfaces, allowing external agent integration  
-![image](doc/image/API.jpeg)  
+### Developer-Friendly: Provides open OpenAI API and MCP interfaces, allowing the agent to be exposed externally.
+![image](doc/image/API.jpeg)
 
-### ComfyUI Integration: Converts ComfyUI workflows into agent tools with multi-ComfyUI server load balancing  
+### ComfyUI Integration: Converts ComfyUI workflows into agent tools with load balancing across multiple ComfyUI servers.
 ![image](doc/image/comfyui.jpeg)
 
 ## Quick Start
