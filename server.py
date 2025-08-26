@@ -982,6 +982,20 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n"})                    
         request = await tools_change_messages(request, settings)
+        chat_vendor = 'OpenAI'
+        for modelProvider in settings['modelProviders']: 
+            if modelProvider['id'] == settings['selectedProvider']:
+                chat_vendor = modelProvider['vendor']
+                break
+        if chat_vendor == 'Dify':
+            if request.messages[2]['role'] == 'user':
+                if request.messages[1]['role'] == 'assistant':
+                    request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
+                if request.messages[0]['role'] == 'system':
+                    request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
+            if request.messages[1]['role'] == 'user':
+                if request.messages[0]['role'] == 'system':
+                    request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
         model = settings['model']
         extra_params = settings['extra_params']
         # 移除extra_params这个list中"name"不包含非空白符的键值对
