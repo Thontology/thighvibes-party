@@ -1635,6 +1635,8 @@ let vue_methods = {
                 this.messages[index].content = `Translation error: ${error.message}`;
                 this.messages[index].isTranslating = false;
             }
+        } finally {
+            this.abortController = null;
         }
     },
     stopGenerate() {
