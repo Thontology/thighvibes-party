@@ -240,7 +240,7 @@ let vue_data = {
   }
 }`
     },
-    activeKbTab: 'add', // 默认激活的标签页
+    activeKbTab: 'settings', // 默认激活的标签页
     webSearchSettings: {
       enabled: false,
       engine: 'duckduckgo',
@@ -962,7 +962,7 @@ let vue_data = {
     isStarting: false,      // 启动中状态
     isStopping: false,      // 停止中状态
     isReloading: false,     // 重载中状态
-    activeMemoryTab: 'add',
+    activeMemoryTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     memories: [],
     newMemory: {
