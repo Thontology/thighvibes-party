@@ -62,17 +62,17 @@
 
 ### Windows Desktop Installation
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-Setup-0.2.5.exe)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.6.exe)
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
 
 ### Windows integration package (installation-free source version)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/super-agent-party-v0.2.5.zip)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.6.zip)
 
 ### MacOS Desktop Installation (beta test)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Mac.dmg)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Mac.dmg)
 
 ⭐Attention! After downloading, drag the app file of the dmg file into the `/Applications` directory, then open end point, execute the following command and enter the root password to remove the attached Quarantine attribute from the network download:
 
@@ -88,11 +88,11 @@ We provide two mainstream Linux installation package formats for your convenienc
 
 `.AppImage` is a Linux application format that does not require installation and can be used immediately. Suitable for most Linux distributions.
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.AppImage)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.AppImage)
 
 #### 2. Install using `.deb` package (Suitable for Ubuntu/Debian systems)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.deb)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.deb)
 
 ### Docker Deployment (Recommended)
 
