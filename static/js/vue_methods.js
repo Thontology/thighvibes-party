@@ -121,8 +121,8 @@ let vue_methods = {
     return originalUrl;
   },
   async resetMessage(index) {
-    this.messages[index].content = this.t('defaultSystemPrompt');
-    this.system_prompt = this.t('defaultSystemPrompt');
+    this.messages[index].content = " ";
+    this.system_prompt = " ";
     await this.autoSaveSettings();
   },
 
@@ -155,40 +155,6 @@ let vue_methods = {
       });
       await this.autoSaveSettings();
     },
-    async addLorebook() {
-      // 如果this.newMemory.lorebook未定义，则初始化为空数组
-      if (!this.newMemory.lorebook) {
-        this.newMemory.lorebook = [];
-      }
-      // 在this.newMemory.lorebook的object中添加一个新的键值对
-      this.newMemory.lorebook.push({
-        name: '',
-        value: ''        // 根据类型自动初始化
-      });
-      this.isWorldviewSettingsExpanded = true;
-      await this.autoSaveSettings();
-    },
-    async removeLorebook(index) {
-      if (index === 0) return; // 禁止删除第一个记忆
-      this.newMemory.lorebook.splice(index, 1);
-      await this.autoSaveSettings();
-    },
-    async addRandom(){
-      // 如果this.newMemory.random未定义，则初始化为空数组
-      if (!this.newMemory.random) {
-        this.newMemory.random = [];
-      }
-      this.newMemory.random.push({
-        value: ''        // 根据类型自动初始化
-      });
-      this.isRandomSettingsExpanded = true;
-      await this.autoSaveSettings();
-    },
-    async removeRandom(index) {
-      if (index === 0) return; // 禁止删除第一个随机记忆
-      this.newMemory.random.splice(index, 1);
-      await this.autoSaveSettings();
-    },
     async updateParamType(index) {
       const param = this.settings.extra_params[index];
       // 根据类型初始化值
@@ -210,15 +176,15 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     switchTollmTools() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'llmTool';
     },
     switchToHttpTools() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'customHttpTool';
     },
     switchToComfyui() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'comfyui';
     },
     switchToStickerPacks() {
@@ -385,18 +351,18 @@ let vue_methods = {
         this.system_prompt = conversation.system_prompt;
       }
       else {
-        this.system_prompt = this.t('defaultSystemPrompt');
+        this.system_prompt = " ";
         this.messages = [{ role: 'system', content: this.system_prompt }];
       }
       this.scrollToBottom();
       await this.autoSaveSettings();
     },
     switchToagents() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'api-group';
       this.subMenu = 'agents';
     },
     switchToa2aServers() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'a2a';
     },
     async syncProviderConfig(targetConfig) {
@@ -438,7 +404,7 @@ let vue_methods = {
       this.autoSaveSettings()
     },
     switchTomcpServers() {
-      this.activeMenu = 'agent_group';
+      this.activeMenu = 'toolkit';
       this.subMenu = 'mcp'
     },
     // 窗口控制
@@ -452,11 +418,7 @@ let vue_methods = {
       if (isElectron) window.electronAPI.windowAction('close');
     },
     async handleSelect(key) {
-      if (key === 'agent_group') {
-        this.activeMenu = 'agent_group';
-        this.subMenu = 'agents'; // 默认显示第一个子菜单
-      }
-      else if (key === 'model-config') {
+      if (key === 'model-config') {
         this.activeMenu = 'model-config';
         this.subMenu = 'service'; // 默认显示第一个子菜单
       }
@@ -940,7 +902,7 @@ let vue_methods = {
     changeMainAgent(agent) {
       this.mainAgent = agent;
       if (agent === 'super-model') {
-        this.system_prompt = this.t('defaultSystemPrompt')
+        this.system_prompt = " "
       }
       else {
         this.system_prompt = this.agents[agent].system_prompt;
@@ -1031,6 +993,7 @@ let vue_methods = {
             top_p: data.data.top_p || 1,
             extra_params: data.data.extra_params || [],
           };
+          this.isBtnCollapse = data.data.isBtnCollapse || false;
           this.system_prompt = data.data.system_prompt || '';
           this.conversations = data.data.conversations || this.conversations;
           this.conversationId = data.data.conversationId || this.conversationId;
@@ -1073,12 +1036,16 @@ let vue_methods = {
           // 初始化时确保数据一致性
           this.edgettsLanguage = this.ttsSettings.edgettsLanguage;
           this.edgettsGender = this.ttsSettings.edgettsGender;
+          this.handleSystemLanguageChange(this.systemSettings.language);
           if (this.HASettings.enabled) {
             this.changeHAEnabled();
           };
           if (this.chromeMCPSettings.enabled){
             this.changeChromeMCPEnabled();
           }
+          this.changeMemory();
+          // this.target_lang改成navigator.language || navigator.userLanguage;
+          this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
           await this.loadDefaultModels();
           await this.loadDefaultMotions();
           if (this.asrSettings.enabled) {
@@ -1575,6 +1542,103 @@ let vue_methods = {
         await this.autoSaveSettings();
       }
     },
+    async translateMessage(index) {
+        const msg = this.messages[index];
+        const originalContent = msg.content;
+
+        // 直接修改原消息状态
+        this.messages[index] = {
+            ...msg,
+            content: this.t('translating') + '...',
+            isTranslating: true,
+            originalContent
+        };
+
+        try {
+            const abortController = new AbortController();
+            this.abortController = abortController;
+
+            const response = await fetch('/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: this.mainAgent,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。`
+                        },
+                        {
+                            role: "user",
+                            content: `请翻译以下内容到${this.target_lang}：\n\n${originalContent}`
+                        }
+                    ],
+                    stream: true,
+                    temperature: 0.1
+                }),
+                signal: abortController.signal
+            });
+
+            if (!response.ok) throw new Error('Translation failed');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let translated = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                
+                // 流式更新逻辑
+                const chunks = buffer.split('\n\n');
+                for (const chunk of chunks.slice(0, -1)) {
+                    if (chunk.startsWith('data: ')) {
+                        const jsonStr = chunk.slice(6);
+                        if (jsonStr === '[DONE]') continue;
+                        
+                        try {
+                            const { choices } = JSON.parse(jsonStr);
+                            if (choices?.[0]?.delta?.content) {
+                                translated += choices[0].delta.content;
+                                // Vue3 的响应式数组可以直接修改
+                                this.messages[index].content = translated;
+                            }
+                        } catch (e) {
+                            console.error('Parse error', e);
+                        }
+                    }
+                }
+                buffer = chunks[chunks.length - 1];
+            }
+
+            // 最终状态更新
+            this.messages[index] = {
+                ...this.messages[index],
+                isTranslating: false,
+                translated: true
+            };
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                // 恢复原始内容
+                this.messages[index] = {
+                    ...msg,
+                    content: originalContent,
+                    isTranslating: false
+                };
+            } else {
+                // 显示错误信息
+                this.messages[index].content = `Translation error: ${error.message}`;
+                this.messages[index].isTranslating = false;
+            }
+        } finally {
+            this.abortController = null;
+            this.isTyping = false;
+        }
+    },
     stopGenerate() {
       if (this.abortController) {
         this.abortController.abort();
@@ -1612,6 +1676,7 @@ let vue_methods = {
           conversations: this.conversations,
           conversationId: this.conversationId,
           reasoner: this.reasonerSettings,
+          isBtnCollapse: this.isBtnCollapse,
           vision: this.visionSettings,
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,
@@ -1741,6 +1806,7 @@ let vue_methods = {
       this.fileLinks = [];
       this.isThinkOpen = false; // 重置思考模式状态
       this.asyncToolsID = [];
+      this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
       await this.autoSaveSettings();
     },
@@ -2075,7 +2141,9 @@ let vue_methods = {
     // 主模型供应商选择
     async selectMainProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
+      console.log(provider)
       if (provider) {
+        console.log("provider")
         this.settings.model = provider.modelId;
         this.settings.base_url = provider.url;
         this.settings.api_key = provider.apiKey;
@@ -2503,8 +2571,13 @@ let vue_methods = {
       return this.translations[this.currentLanguage][key] || key;
     },
     async handleSystemLanguageChange(val) {
-      this.currentLanguage = val;
       this.systemSettings.language = val;
+      if (val === 'auto') {
+        // 获取系统设置，默认是'en-US'，如果系统语言是中文，则设置为'zh-CN'
+        const systemLanguage = navigator.language || navigator.userLanguage || 'en-US';
+        val = systemLanguage.startsWith('zh') ? 'zh-CN' : 'en-US';
+      }
+      this.currentLanguage = val; // 更新当前语言
       await this.autoSaveSettings();
       this.$forceUpdate();
     },
@@ -2889,54 +2962,76 @@ let vue_methods = {
         this.newMemory.api_key = provider.apiKey;
       }
     },
+
+    // 世界书条目清空
+    clearBook(idx) {
+      this.newMemory.characterBook[idx].keysRaw = '';
+      this.newMemory.characterBook[idx].content = '';
+    },
+    /* 世界书 */
+    addBook() {
+      this.newMemory.characterBook.push({ keysRaw: '', content: '' });
+    },
+    removeBook(idx) {
+      this.newMemory.characterBook.splice(idx, 1);
+    },
+    clearGreeting(idx) {
+      this.newMemory.alternateGreetings[idx] = '';
+    },
+    clearFirstMes() {
+      this.newMemory.firstMes = '';
+    },
+    /* 删除 alternate greeting */
+    removeGreeting(idx) {
+      this.newMemory.alternateGreetings.splice(idx, 1);
+    },
+    /* 新增 alternate greeting */
+    addGreeting() {
+      this.newMemory.alternateGreetings.push('');
+    },
     async addMemory() {
-      if (this.newMemory.id === null){
-        const newMem = {
-          id: uuid.v4(),
-          name: this.newMemory.name,
-          providerId: this.newMemory.providerId,
-          model:this.newMemory.model,
-          api_key: this.newMemory.api_key,
-          base_url: this.newMemory.base_url,
-          vendor:this.newMemory.providerId ? this.modelProviders.find(p => p.id === this.newMemory.providerId).vendor: "",
-          lorebook: this.newMemory.lorebook,
-          random: this.newMemory.random,
-          basic_character: this.newMemory.basic_character,
-        };
+      /* 把新字段组装成一个“记忆”对象 */
+      const build = () => ({
+        id: this.newMemory.id || uuid.v4(),
+        name: this.newMemory.name,
+        providerId: this.newMemory.providerId,
+        model: this.newMemory.model,
+        api_key: this.newMemory.api_key,
+        base_url: this.newMemory.base_url,
+        vendor: this.newMemory.providerId
+          ? this.modelProviders.find(p => p.id === this.newMemory.providerId)?.vendor || ''
+          : '',
+
+        /* 酒馆 V3 字段 */
+        description:   this.newMemory.description,
+        avatar:      this.newMemory.avatar,
+        personality:   this.newMemory.personality,
+        mesExample:    this.newMemory.mesExample,
+        systemPrompt:  this.newMemory.systemPrompt,
+        firstMes:      this.newMemory.firstMes,
+        alternateGreetings: this.newMemory.alternateGreetings.filter(Boolean),
+        characterBook: this.newMemory.characterBook.filter(
+          e => e.keysRaw.trim() || e.content.trim()
+        )
+      });
+
+      /* 新增 or 更新 */
+      if (this.newMemory.id === null) {
+        const newMem = build();
         this.memories.push(newMem);
-        if (this.memorySettings.selectedMemory === null){
+        if (this.memorySettings.selectedMemory === null) {
           this.memorySettings.selectedMemory = newMem.id;
         }
-      }
-      else {
-        const memory = this.memories.find(m => m.id === this.newMemory.id);
-        if (memory) {
-          memory.name = this.newMemory.name;
-          memory.providerId = this.newMemory.providerId;
-          memory.model = this.newMemory.model;
-          memory.api_key = this.newMemory.api_key;
-          memory.base_url = this.newMemory.base_url;
-          memory.vendor = this.newMemory.providerId ? this.modelProviders.find(p => p.id === this.newMemory.providerId).vendor: "";
-          memory.lorebook = this.newMemory.lorebook;
-          memory.random = this.newMemory.random;
-          memory.basic_character = this.newMemory.basic_character;
+      } else {
+        const idx = this.memories.findIndex(m => m.id === this.newMemory.id);
+        if (idx !== -1) {
+          this.memories.splice(idx, 1, build());
         }
       }
-
+      this.resetNewMemory(); // 重置表单
+      this.changeMemory(); // 切换到新记忆
       await this.autoSaveSettings();
       this.showAddMemoryDialog = false;
-      this.newMemory = { 
-        id: null,
-        name: '', 
-        providerId: null,
-        model: '',
-        api_key: '',
-        base_url: '',
-        vendor: '',
-        lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-        random: [{ value: '' }], // 默认至少一个条目
-        basic_character: "",
-       };
     },
     
     async removeMemory(id) {
@@ -3306,33 +3401,62 @@ let vue_methods = {
     escapeSeparator(s) {
       return s.replace(/\\n/g, '\n').replace(/\\t/g, '\t')
     },
-    clearParam(index) {
-      this.newMemory.lorebook[index].name = "";
-      this.newMemory.lorebook[index].value = "";
-      this.autoSaveSettings();
-    },
-    clearRandom(index) {
-      this.newMemory.random[index].value = "";
-      this.autoSaveSettings();
+
+    // 一键重置
+    resetNewMemory() {
+      this.newMemory = {
+        id: null,
+        name: '',
+        providerId: null,
+        model: '',
+        base_url: '',
+        api_key: '',
+        vendor: '',
+        description: '',
+        avatar: '',
+        personality: '',
+        mesExample: '',
+        systemPrompt: '',
+        firstMes: '',
+        alternateGreetings: [],
+        characterBook: [{ keysRaw: '', content: '' }]
+      };
     },
     copyExistingMemoryData(selectedId) {
-      const existingMemory = this.memories.find(memory => memory.id === selectedId);
-      if (existingMemory) {
-        this.newMemory = { ...existingMemory };
-        this.newMemory.id = null; // 确保新记忆的ID为null，以便在创建时生成新的ID
-      } else {
-        this.newMemory = { 
+      const src = this.memories.find(m => m.id === selectedId);
+      if (src) {
+        /* 把旧字段映射到新字段，没有的就给默认值 */
+        this.newMemory = {
           id: null,
-          name: '', 
-          providerId: null,
-          model: '',
-          base_url: '',
-          api_key: '',
-          vendor: '',
-          lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-          random: [{ value: '' }], // 默认至少一个条目
-          basic_character: '',
+          name: src.name || '',
+          providerId: src.providerId || null,
+          model: src.model || '',
+          base_url: src.base_url || '',
+          api_key: src.api_key || '',
+          vendor: src.vendor || '',
+
+          /* 旧→新 */
+          description: src.basic_character || src.description || '',
+          avatar: src.avatar || '',
+          personality: src.personality || '',
+          mesExample: src.mesExample || '',
+          systemPrompt: src.systemPrompt || '',
+          firstMes: src.firstMes || (Array.isArray(src.random) ? src.random[0]?.value : ''),
+          alternateGreetings:
+            Array.isArray(src.alternateGreetings)
+              ? src.alternateGreetings
+              : (src.random || []).slice(1).map(r => r.value),
+          characterBook:
+            Array.isArray(src.characterBook)
+              ? src.characterBook
+              : (src.lorebook || []).map(l => ({
+                  keysRaw: l.name,
+                  content: l.value
+                }))
         };
+      } else {
+        /* 新建：直接给空模板 */
+        this.resetNewMemory();
       }
     },
     colorBlend(color1, color2, ratio) {
@@ -3744,28 +3868,102 @@ let vue_methods = {
       this.dialogVisible = true
     },
     downloadMemory(memory) {
-      // 创建一个新的对象，只包含需要下载的字段
-      const { id, name, basic_character, lorebook, random } = memory;
-      
-      const dataToDownload = {
-        id,
-        name,
-        basic_character,
-        lorebook,
-        random
-        // 可以根据需要添加其他非敏感字段
+      // 仅导出酒馆 V3 所需字段，敏感信息全部剔除
+      const card = {
+        spec: 'chara_card_v3',
+        spec_version: '3.0',
+        name: memory.name,
+        description: memory.description || '',
+        avatar: memory.avatar || '',
+        personality: memory.personality || '',
+        mes_example: memory.mesExample || '',
+        first_mes: memory.firstMes || '',
+        system_prompt: memory.systemPrompt || '',
+        alternate_greetings: Array.isArray(memory.alternateGreetings)
+          ? memory.alternateGreetings.filter(Boolean)
+          : [],
+        character_book: {
+          name: memory.name,
+          entries: Array.isArray(memory.characterBook)
+            ? memory.characterBook
+                .filter(e => e.keysRaw?.trim() && e.content?.trim())
+                .map((e, idx) => ({
+                  id: idx,
+                  keys: e.keysRaw
+                    .split(/\r?\n/)
+                    .map(k => k.trim())
+                    .filter(Boolean),
+                  secondary_keys: [],
+                  content: e.content,
+                  comment: '',
+                  constant: false,
+                  selective: true,
+                  insertion_order: 100,
+                  enabled: true,
+                  position: 'before_char',
+                  use_regex: true,
+                  extensions: {}
+                }))
+            : []
+        }
+        // 其余字段如 avatar、tags、scenario…按需补空
       };
 
-      const dataStr = JSON.stringify(dataToDownload, null, 2); // 将新对象转换为 JSON 字符串
-      const blob = new Blob([dataStr], { type: 'application/json' }); // 创建 Blob
-      const url = URL.createObjectURL(blob); // 创建 URL
-      const a = document.createElement('a'); // 创建一个链接元素
+      const blob = new Blob([JSON.stringify(card, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `${memory.name}.json`; // 设置下载文件的名称
-      document.body.appendChild(a); // 将链接添加到文档中
-      a.click(); // 自动点击链接开始下载
-      document.body.removeChild(a); // 下载后移除链接
-      URL.revokeObjectURL(url); // 释放 URL 对象
+      a.download = `${memory.name}_v3.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    changeMemory() {
+      if (this.memorySettings.is_memory){
+        // 根据selectedMemory获取当前的memories中的对应的记忆
+        let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
+        this.firstMes = curMemory.firstMes;
+        this.alternateGreetings= curMemory.alternateGreetings;
+      }
+      else{
+        this.firstMes = '';
+        this.alternateGreetings = [];
+      }
+      this.randomGreetings();
+      this.autoSaveSettings(); // 保存设置
+    },
+    randomGreetings() {
+      let greetings = [this.firstMes, ...this.alternateGreetings];
+      // 过滤掉空字符串
+      greetings = greetings.filter(greeting => greeting.trim() !== '');
+      // 替换掉开场白中的所有的{{user}}为this.memorySettings.userName
+      greetings = greetings.map(greeting => greeting.replace(/{{user}}/g, this.memorySettings.userName));
+      // 根据selectedMemory获取当前的memories中的对应的记忆
+      let curMemory = this.memories.find(memory => memory.id === this.memorySettings.selectedMemory);
+      // 替换掉开场白中的所有的{{char}}为curMemory.name
+      greetings = greetings.map(greeting => greeting.replace(/{{char}}/g, curMemory.name));
+      if (greetings.length > 0) {
+        let randomIndex = Math.floor(Math.random() * greetings.length);
+        // 将随机的开场白立刻加入的this.messages中
+        // 如果this.messages中第二个元素是开场白，则替换，否则在第一个元素之后插入
+        if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
+          this.messages[1].content = greetings[randomIndex];
+        } else {
+          this.messages.splice(1, 0, {
+            role: 'assistant',
+            content: greetings[randomIndex]
+          });
+        }
+      } 
+      else{
+        // 如果this.messages中第二个元素是开场白，则移除
+        if (this.messages.length > 1 && this.messages[1].role === 'assistant') {
+          this.messages.splice(1, 1);
+        }
+      }
     },
     browseJsonFile() {
       const input = document.createElement('input');
@@ -3802,14 +4000,30 @@ let vue_methods = {
     },
 
     importMemoryData(jsonData) {
-      // 根据 JSON 数据填充 newMemory 对象
-      this.newMemory.name = jsonData.name || '';
-      this.newMemory.basic_character = jsonData.basic_character || '';
-      this.newMemory.lorebook = jsonData.lorebook || [];
-      this.newMemory.random = jsonData.random || [];
-      this.newMemory.providerId = jsonData.providerId || null;
+      // 兼容 V2/V3：统一抽出 data
+      const data = jsonData.data || jsonData;
 
-      // 可以根据需要添加更多字段的映射
+      this.newMemory = {
+        ...this.newMemory,                      // 保持 providerId 等旧字段
+        name: data.name || '',
+        description: data.description || '',
+        avatar: data.avatar || '',
+        personality: data.personality || '',
+        mesExample: data.mes_example || '',
+        systemPrompt: data.system_prompt || '',
+        firstMes: data.first_mes || '',
+        alternateGreetings: Array.isArray(data.alternate_greetings)
+          ? data.alternate_greetings
+          : [''],
+        characterBook:
+          Array.isArray(data.character_book?.entries) &&
+          data.character_book.entries.length
+            ? data.character_book.entries.map(e => ({
+                keysRaw: (e.keys || []).join('\n'),
+                content: e.content || ''
+              }))
+            : [{ keysRaw: '', content: '' }]
+      };
     },
 
     removeJsonFile() {

@@ -488,6 +488,11 @@ app.whenReady().then(async () => {
     // 加载主页面
     await mainWindow.loadURL(`http://${HOST}:${PORT}`)
     ipcMain.on('set-language', (_, lang) => {
+      if (lang === 'auto') {
+        // 获取系统设置，默认是'en-US'，如果系统语言是中文，则设置为'zh-CN'
+        const systemLang = app.getLocale().split('-')[0];
+        lang = systemLang === 'zh' ? 'zh-CN' : 'en-US';
+      }
       currentLanguage = lang;
       updateTrayMenu();
       updatecontextMenu();

@@ -82,7 +82,7 @@ class QQBotManager:
             asyncio.set_event_loop(self.loop)
             
             # 创建机器人客户端
-            self.bot_client = MyClient(intents=botpy.Intents(public_messages=True))
+            self.bot_client = MyClient(intents=botpy.Intents(public_messages=True),is_sandbox=config.is_sandbox)
             self.bot_client.QQAgent = config.QQAgent
             self.bot_client.memoryLimit = config.memoryLimit
             self.bot_client.separators = config.separators if config.separators else ['。', '\n', '？', '！']

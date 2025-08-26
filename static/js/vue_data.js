@@ -101,6 +101,7 @@ let vue_data = {
       temperature: 0.7,  // 默认温度值
       reasoning_effort: null,
     },
+    target_lang: 'zh-CN',
     reasoningEfforts:[
       { value: null, label: 'auto' },
       { value: 'low', label: 'low' },
@@ -135,6 +136,7 @@ let vue_data = {
     showComfyUIDialog: false,
     showStickerPacksDialog: false,
     showGsvRefAudioPathDialog: false,
+    showModelDialog: false,
     deletingConversationId: null, // 正在被删除的对话ID
     jsonFile: null,
     models: [],
@@ -315,7 +317,7 @@ let vue_data = {
     },
     newKbFiles: [],
     systemSettings: {
-      language: 'zh-CN',
+      language: 'auto',
       theme: 'light',
       network:"local",
       proxy: '',
@@ -821,10 +823,16 @@ let vue_data = {
       { id: 'sticker', title: 'sticker/image', icon: 'fa-solid fa-face-smile'},
       { id: 'HA', title: 'homeAssistant', icon: 'fa-solid fa-house'},
       { id: 'chromeMCP', title: 'browserControl', icon: 'fa-brands fa-chrome' },
+      { id: 'mcp', title: 'mcpServers', icon: 'fa-solid fa-server'},
+      { id: 'a2a', title: 'a2aServers', icon: 'fa-solid fa-plug'},
+      { id: 'llmTool', title: 'llmTools', icon: 'fa-solid fa-network-wired'},
+      { id: 'customHttpTool', title: 'customHttpTool', icon: 'fa-solid fa-wifi'},
+      { id: 'comfyui', title: 'ComfyUI', icon: 'fa-solid fa-palette'},
     ],
     apiTiles: [
       { id: 'openai', title: 'openaiStyleAPI', icon: 'fa-solid fa-link' },
       { id: 'mcp', title: 'MCPStyleAPI', icon: 'fa-solid fa-server' },
+      { id: 'agents', title: 'agentSnapshot', icon: 'fa-solid fa-robot'},
       { id: 'docker', title: 'docker', icon: 'fa-brands fa-docker'},
       { id: 'browser', title: 'browserMode', icon: 'fa-solid fa-globe' },
       { id: 'fastapi', title: 'fastAPIDocs', icon: 'fa-solid fa-book' },
@@ -876,6 +884,7 @@ let vue_data = {
       separators: ["。", "\n", "？", "！"],
       reasoningVisible: true,
       quickRestart: true,
+      is_sandbox: false,
     },
     ttsWebSocket: null,
     wsConnected: false,
@@ -956,24 +965,33 @@ let vue_data = {
     activeMemoryTab: 'add',
     activeMemoryTabName: 'autoUpdateSetting',
     memories: [],
-    newMemory: { 
+    newMemory: {
       id: null,
-      name: '', 
+      name: '',
       providerId: null,
       model: '',
       base_url: '',
       api_key: '',
       vendor: '',
-      lorebook: [{ name: '', value: '' }], // 默认至少一个条目
-      random: [{ value: '' }], // 默认至少一个条目
-      basic_character: '',
+      description: '',
+      avatar: '',
+      personality: '',
+      mesExample: '',
+      systemPrompt: '',
+      firstMes: '',
+      alternateGreetings: [],
+      characterBook: [{ keysRaw: '', content: '' }]
     },
+    firstMes: '',
+    alternateGreetings: [],
     showAddMemoryDialog: false,
     showMemoryDialog: false,
     memorySettings: {
       selectedMemory: null,
       is_memory: false,
-      memoryLimit: 10
+      memoryLimit: 10,
+      userName:'user',
+      genericSystemPrompt: '{{char}}必须使用{{user}}使用的语言与之交流，例如：当{{user}}使用中文时，你也必须尽可能地使用中文！当{{user}}使用英文时，你也必须尽可能地使用英文！包括交代旁白等文字也是同理！',
     },
     textFiles: [],
     imageFiles: [],
@@ -1136,6 +1154,7 @@ let vue_data = {
       modelId: ''
     },
     systemlanguageOptions:[
+      { value: 'auto', label: 'auto' }, 
       { value: 'zh-CN', label: '中文' }, 
       { value: 'en-US', label: 'English' },
     ],

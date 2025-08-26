@@ -14,7 +14,7 @@
     "reasoning_effort": null,
     "extra_params":[],
     "systemSettings": {
-      "language": "zh-CN",
+      "language": "auto",
       "theme": "light",
       "network":"local",
       "proxy": ""
@@ -124,7 +124,9 @@
     "memorySettings": {
       "selectedMemory": null,
       "is_memory": false,
-      "memoryLimit": 10
+      "memoryLimit": 10,
+      "userName":"user",
+      "genericSystemPrompt": "{{char}}必须使用{{user}}使用的语言与之交流，例如：当{{user}}使用中文时，你也必须尽可能地使用中文！当{{user}}使用英文时，你也必须尽可能地使用英文！包括交代旁白等文字也是同理！"
     },
     "codeSettings": {
       "enabled": false,
@@ -255,5 +257,8 @@
       "github_branch": "main"
     },
     "workflows": [],
-    "stickerPacks": []
+    "stickerPacks": [],
+    "currentLanguage": "zh-CN",
+    "isBtnCollapse": false,
+    "is_sandbox": false
 }

@@ -2576,8 +2576,8 @@ body {
   flex-direction: column;
   height: 100%;
 }
-/* 选择倒数第二个菜单项（system）*/
-.el-menu-item:nth-last-child(2) {
+/* 选择倒数第3个菜单项（system）*/
+.el-menu-item:nth-last-child(3) {
   margin-top: auto; /* 这个属性会让它和后面的元素自动推到容器底部 */
 }
 
