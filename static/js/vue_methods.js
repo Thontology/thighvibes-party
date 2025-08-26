@@ -1727,11 +1727,11 @@ let vue_methods = {
             reject(new Error('保存失败'));
           }
         };
-        // 设置 5 秒超时
+        // 设置 10 秒超时
         const timeout = setTimeout(() => {
           this.ws.removeEventListener('message', handler);
           reject(new Error('保存超时'));
-        }, 5000);
+        }, 10000);
         this.ws.addEventListener('message', handler);
       });
     },
