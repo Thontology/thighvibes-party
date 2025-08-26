@@ -101,6 +101,7 @@ let vue_data = {
       temperature: 0.7,  // 默认温度值
       reasoning_effort: null,
     },
+    target_lang: 'zh-CN',
     reasoningEfforts:[
       { value: null, label: 'auto' },
       { value: 'low', label: 'low' },
@@ -883,6 +884,7 @@ let vue_data = {
       separators: ["。", "\n", "？", "！"],
       reasoningVisible: true,
       quickRestart: true,
+      is_sandbox: false,
     },
     ttsWebSocket: null,
     wsConnected: false,

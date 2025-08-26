@@ -5143,6 +5143,7 @@ class QQBotConfig(BaseModel):
     separators: List[str]
     reasoningVisible: bool
     quickRestart: bool
+    is_sandbox: bool
 
 # 全局机器人管理器
 qq_bot_manager = QQBotManager()

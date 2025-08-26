@@ -710,6 +710,9 @@ key3`,
         'genericSystemPromptPlaceholder': '请输入通用系统提示，例如：总是使用用户使用的语言与之交流',
         'avatar': '头像',
         'avatarPlaceholder': '请输入头像链接或者本地文件绝对路径，例如：https://example.com/avatar.png 或 /Users/username/avatar.png 或 C:\\Users\\username\\avatar.png',
+        'translate': '翻译',
+        'translating': '翻译中',
+        'is_sandbox': '是否开启沙盒模式',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1419,5 +1422,8 @@ Key3`,
         'genericSystemPromptPlaceholder': 'Please enter a generic system prompt, for example: Always communicate with the user in the language they use',
         'avatar': 'Avatar',
         'avatarPlaceholder': 'Please enter the avatar link or the absolute path to the local file, for example: https://example.com/avatar.png or /Users/username/avatar.png or C:\\ Users\\ username\\ avatar.png',
+        'translate': 'Translate',
+        'translating': 'Translating',
+        'is_sandbox': 'Is sandbox',
     }
   };

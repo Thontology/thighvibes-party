@@ -1044,6 +1044,8 @@ let vue_methods = {
             this.changeChromeMCPEnabled();
           }
           this.changeMemory();
+          // this.target_lang改成navigator.language || navigator.userLanguage;
+          this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
           await this.loadDefaultModels();
           await this.loadDefaultMotions();
           if (this.asrSettings.enabled) {
@@ -1539,6 +1541,103 @@ let vue_methods = {
         this.abortController = null;
         await this.autoSaveSettings();
       }
+    },
+    async translateMessage(index) {
+        const msg = this.messages[index];
+        const originalContent = msg.content;
+
+        // 直接修改原消息状态
+        this.messages[index] = {
+            ...msg,
+            content: this.t('translating') + '...',
+            isTranslating: true,
+            originalContent
+        };
+
+        try {
+            const abortController = new AbortController();
+            this.abortController = abortController;
+
+            const response = await fetch('/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: this.mainAgent,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。`
+                        },
+                        {
+                            role: "user",
+                            content: `请翻译以下内容到${this.target_lang}：\n\n${originalContent}`
+                        }
+                    ],
+                    stream: true,
+                    temperature: 0.1
+                }),
+                signal: abortController.signal
+            });
+
+            if (!response.ok) throw new Error('Translation failed');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let translated = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                
+                // 流式更新逻辑
+                const chunks = buffer.split('\n\n');
+                for (const chunk of chunks.slice(0, -1)) {
+                    if (chunk.startsWith('data: ')) {
+                        const jsonStr = chunk.slice(6);
+                        if (jsonStr === '[DONE]') continue;
+                        
+                        try {
+                            const { choices } = JSON.parse(jsonStr);
+                            if (choices?.[0]?.delta?.content) {
+                                translated += choices[0].delta.content;
+                                // Vue3 的响应式数组可以直接修改
+                                this.messages[index].content = translated;
+                            }
+                        } catch (e) {
+                            console.error('Parse error', e);
+                        }
+                    }
+                }
+                buffer = chunks[chunks.length - 1];
+            }
+
+            // 最终状态更新
+            this.messages[index] = {
+                ...this.messages[index],
+                isTranslating: false,
+                translated: true
+            };
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                // 恢复原始内容
+                this.messages[index] = {
+                    ...msg,
+                    content: originalContent,
+                    isTranslating: false
+                };
+            } else {
+                // 显示错误信息
+                this.messages[index].content = `Translation error: ${error.message}`;
+                this.messages[index].isTranslating = false;
+            }
+        } finally {
+            this.abortController = null;
+            this.isTyping = false;
+        }
     },
     stopGenerate() {
       if (this.abortController) {

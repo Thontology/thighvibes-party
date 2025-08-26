@@ -311,6 +311,11 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-copy"></i>
                   </el-button>
                 </el-tooltip>
+                <el-tooltip  :content="t('translate')" placement="bottom">
+                  <el-button @click="translateMessage(index)" circle size="small">
+                    <i class="fa-solid fa-language"></i>
+                  </el-button>
+                </el-tooltip>
                 <el-tooltip v-if="message.role !== 'system'" :content="t('delete')" placement="bottom">
                   <el-button @click="deleteMessage(index)" circle size="small">
                     <i class="fa-solid fa-trash-can"></i>
@@ -5570,6 +5575,12 @@ if ('serviceWorker' in navigator) {
                             <el-form-item :label="t('reasoningVisibleEnable')" class="form-item-align" label-position="left">
                               <el-switch
                                 v-model="qqBotConfig.reasoningVisible"
+                                @change="autoSaveSettings"
+                              ></el-switch>
+                            </el-form-item>
+                            <el-form-item :label="t('is_sandbox')" class="form-item-align" label-position="left">
+                              <el-switch
+                                v-model="qqBotConfig.is_sandbox"
                                 @change="autoSaveSettings"
                               ></el-switch>
                             </el-form-item>

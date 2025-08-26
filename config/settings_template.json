@@ -259,5 +259,6 @@
     "workflows": [],
     "stickerPacks": [],
     "currentLanguage": "zh-CN",
-    "isBtnCollapse": false
+    "isBtnCollapse": false,
+    "is_sandbox": false
 }
