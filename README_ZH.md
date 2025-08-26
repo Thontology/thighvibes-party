@@ -34,17 +34,17 @@
 
 ## 软件截图
 
-### 多服务商支持：本地部署引擎以及云服务商接口均支持
+### 多服务商支持：本地部署引擎(ollama/dify等等)以及云服务商接口均支持
 ![image](doc/image/model.jpeg)
 
-### 海量工具：支持异步调用，不阻塞智能体回复
+### 海量工具：内置各种工具(如知识库、联网、智能家居、浏览器控制)，支持异步调用，不阻塞智能体回复
 ![image](doc/image/HA.jpeg)
 
 ### VRM桌宠：支持上传自定义VRM模型，打造专属桌面伴侣
 ![image](doc/image/vrmbot.jpeg)
 
-### 记忆模块：支持永久记忆，支持lorebook世界观构建
-![image](doc/image/memory.jpeg)
+### 酒馆角色卡：支持酒馆角色卡，支持长期记忆
+![image](doc/image/card.jpeg)
 
 ### 微信机器人：模拟用户操作，非入侵式的接管你的微信，避免风控
 ![image](doc/image/wxbot.jpeg)
@@ -62,17 +62,17 @@
 
 ### windows桌面版安装
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-Setup-0.2.5.exe)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.6.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
 
 ### windows整合包（免安装源码版本）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/super-agent-party-v0.2.5.zip)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.6.zip)
 
 ### MacOS桌面版安装（beta测试）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Mac.dmg)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Mac.dmg)
 
 ⭐注意！下载后将dmg文件的app文件拖入`/Applications`目录下，然后打开终端，执行以下命令并输入root密码，从而移除从网络下载附加的Quarantine属性：
 
@@ -88,11 +88,11 @@
 
 `.AppImage` 是一种无需安装、即开即用的 Linux 应用格式。适用于大多数 Linux 发行版。
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.AppImage)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.AppImage)
 
 #### 2. 使用 `.deb` 包安装（适用于 Ubuntu / Debian 系统）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.deb)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.deb)
 
 ### docker部署（推荐）
 

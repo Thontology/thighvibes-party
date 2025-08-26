@@ -34,45 +34,45 @@
 
 ## Software Screenshots
 
-### Multi-Vendor Support: Supports both locally deployed engines and cloud vendor interfaces  
-![image](doc/image/model.jpeg)  
+### Multi-Service Provider Support: Supports both locally deployed engines (e.g., Ollama, Dify) and cloud service provider APIs.
+![image](doc/image/model.jpeg)
 
-### Massive tools: support asynchronous calls without blocking agent replies
+### Extensive Tool Integration: Built-in various tools (e.g., knowledge base, web search, smart home control, browser automation), supporting asynchronous invocation without blocking agent responses.
 ![image](doc/image/HA.jpeg)
 
-### VRM desktop companion: Supports uploading custom VRM models to create a personalized desktop companion  
-![image](doc/image/vrmbot.jpeg)  
+### VRM Desktop Pet: Supports uploading custom VRM models to create a personalized desktop companion.
+![image](doc/image/vrmbot.jpeg)
 
-### Memory Module: Supports permanent memory and lorebook world-building  
-![image](doc/image/memory.jpeg)  
+### Tavern Character Cards: Supports Tavern character cards with long-term memory capabilities.
+![image](doc/image/card.jpeg)
 
-### WeChat bot: Simulate user operations, take over your WeChat in a non-intrusive way, and avoid risk control
+### WeChat Bot: Non-intrusively takes control of your WeChat by simulating user operations, minimizing the risk of account restrictions.
 ![image](doc/image/wxbot.jpeg)
 
-### QQ Bot: Supports one-click deployment to the official QQ bot, enabling users to access the agent anytime, anywhere  
-![image](doc/image/qqbot.jpeg)  
+### QQ Bot: Supports one-click deployment to the official QQ bot platform, enabling users to access the agent anytime, anywhere.
+![image](doc/image/qqbot.jpeg)
 
-### Developer-Friendly: Open OpenAI API and MCP interfaces, allowing external agent integration  
-![image](doc/image/API.jpeg)  
+### Developer-Friendly: Provides open OpenAI API and MCP interfaces, allowing the agent to be exposed externally.
+![image](doc/image/API.jpeg)
 
-### ComfyUI Integration: Converts ComfyUI workflows into agent tools with multi-ComfyUI server load balancing  
+### ComfyUI Integration: Converts ComfyUI workflows into agent tools with load balancing across multiple ComfyUI servers.
 ![image](doc/image/comfyui.jpeg)
 
 ## Quick Start
 
 ### Windows Desktop Installation
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-Setup-0.2.5.exe)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.6.exe)
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
 
 ### Windows integration package (installation-free source version)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/super-agent-party-v0.2.5.zip)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.6.zip)
 
 ### MacOS Desktop Installation (beta test)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Mac.dmg)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Mac.dmg)
 
 ⭐Attention! After downloading, drag the app file of the dmg file into the `/Applications` directory, then open end point, execute the following command and enter the root password to remove the attached Quarantine attribute from the network download:
 
@@ -88,11 +88,11 @@ We provide two mainstream Linux installation package formats for your convenienc
 
 `.AppImage` is a Linux application format that does not require installation and can be used immediately. Suitable for most Linux distributions.
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.AppImage)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.AppImage)
 
 #### 2. Install using `.deb` package (Suitable for Ubuntu/Debian systems)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.5/Super-Agent-Party-0.2.5-Linux.deb)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-0.2.6-Linux.deb)
 
 ### Docker Deployment (Recommended)
 
