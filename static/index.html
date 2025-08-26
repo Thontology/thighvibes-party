@@ -4682,6 +4682,26 @@ if ('serviceWorker' in navigator) {
                             </el-option>
                           </el-select>
                         </el-form-item>
+                        <el-alert type="info" :closable="false" class="mb-2">
+                          <template #default>
+                            <div class="alert-content">
+                              {{ t('firstTimeUse') }}
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                class="font-medium"
+                                @click="switchToApiBox"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>{{ t('keyBoxInterface') }}
+                              </el-link>
+                              {{ t('addProviderReturnSelect') }}
+                              {{ t('addemdNotice') }}
+                              {{ t('autoUpdateSettingNote') }}
+                            </div>
+                          </template>
+                        </el-alert>
                       </el-tab-pane>
 
                       <!-- 角色描述 -->
