@@ -993,6 +993,7 @@ let vue_methods = {
             top_p: data.data.top_p || 1,
             extra_params: data.data.extra_params || [],
           };
+          this.isBtnCollapse = data.data.isBtnCollapse || false;
           this.system_prompt = data.data.system_prompt || '';
           this.conversations = data.data.conversations || this.conversations;
           this.conversationId = data.data.conversationId || this.conversationId;
@@ -1576,6 +1577,7 @@ let vue_methods = {
           conversations: this.conversations,
           conversationId: this.conversationId,
           reasoner: this.reasonerSettings,
+          isBtnCollapse: this.isBtnCollapse,
           vision: this.visionSettings,
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,

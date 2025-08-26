@@ -712,7 +712,6 @@ if ('serviceWorker' in navigator) {
                 @click="showHistoryDialog = true"
                 class="icon-btn history-btn"
                 :type="'default'"
-                v-if="!isBtnCollapse"
                 circle>
                 <i class="fa-solid fa-clock-rotate-left"></i>
               </el-button>
@@ -745,7 +744,6 @@ if ('serviceWorker' in navigator) {
                 @click="showModelDialog = true"
                 class="icon-btn knowledge-base-btn"
                 type='default'
-                v-if="!isBtnCollapse"
                 circle>
                 <i class="fa-solid fa-microchip"></i>
               </el-button>
@@ -983,7 +981,7 @@ if ('serviceWorker' in navigator) {
             </el-tooltip>
             <!--展开收起按钮-->
             <el-tooltip :content="isBtnCollapse ? t('expand') : t('collapse')" placement="top">
-              <el-button @click="isBtnCollapse=!isBtnCollapse" class="icon-btn collapse-btn" circle>
+              <el-button @click="isBtnCollapse=!isBtnCollapse; autoSaveSettings()" class="icon-btn collapse-btn" circle>
                 <i :class="isBtnCollapse ? 'fa-solid fa-angle-right' : 'fa-solid fa-angle-left'"></i>
               </el-button>
             </el-tooltip>

@@ -258,5 +258,6 @@
     },
     "workflows": [],
     "stickerPacks": [],
-    "currentLanguage": "zh-CN"
+    "currentLanguage": "zh-CN",
+    "isBtnCollapse": false
 }
