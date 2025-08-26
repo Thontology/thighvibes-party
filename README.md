@@ -20,11 +20,11 @@
 
 ### 🚀 **A 3D AI desktop companion with endless possibilities!**  
 
-- ✅ Seamless capability enhancement: It is possible to achieve an enterprise-level upgrade of the LLM API without code modification, seamlessly integrating knowledge bases, real-time networking, permanent memory, code execution, multimodal capabilities (vision/drawing/audition/speech), Automation capabilities (controlling smart homes, controlling browsers), deep thinking control and research, and other modular functions into the existing model interface, creating a pluggable LLM enhancement platform.
+- ✅ Seamless capability enhancement: It is possible to achieve an enterprise-level upgrade of the LLM API without code modification, seamlessly integrating knowledge bases, real-time networking, permanent memory, compatible SillyTavern Character Card, code execution, multimodal capabilities (vision/drawing/audition/speech), Automation capabilities (controlling smart homes, controlling browsers), deep thinking control and research, and other modular functions into the existing model interface, creating a pluggable LLM enhancement platform.
 
 - ✅ One-click deployment across all channels: It supports the rapid deployment of intelligent agents to multiple types of terminals, and is compatible with scenarios such as classic chat interfaces, WeChat/QQ official robots, Bilibili live interaction, and VRM virtual desktop pets, ready to use out of the box.
 
-- ✅ Ecological tool interconnection: It can freely access third-party intelligent entities and workflows as a tool chain (already adapted to systems such as ComfyUI/MCP/A2A), and achieve cross-platform capability aggregation through the agent-party architecture.
+- ✅ Ecological tool interconnection: It can freely access third-party intelligent entities and workflows as a tool chain (already adapted to systems such as Dify/ComfyUI/MCP/A2A), and achieve cross-platform capability aggregation through the agent-party architecture.
 
 - ✅ Standardized interface opening: Provide OpenAI API-compatible interfaces and MCP protocol support, making it easy for developers to directly connect to external systems and achieve rapid transfer and secondary development of the agent's capabilities.
 
