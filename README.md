@@ -63,8 +63,7 @@
 - CPU: 2 cores or more
 - Memory: 2GB or more
 
-**Since all models are optional, can be plugged into the on-premises engine, or can all use the Cloud as a Service Provider interface, there are few hardware requirements.**
-
+**Because all models are optional, you can access the local deployment engine, or you can all use the Cloud as a Service provider interface, so there are few hardware requirements. Test the docker version on the 2-core 2G Cloud as a Service server and it will work fine**
 
 ## Quick Start
 
