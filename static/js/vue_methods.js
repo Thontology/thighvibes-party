@@ -4773,8 +4773,12 @@ let vue_methods = {
           const audioBlob = await response.blob();
           
           // 转换为 Base64
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result.split(',')[1]); // 去掉 data:*
+            reader.onerror = reject;
+            reader.readAsDataURL(audioBlob);
+          });
           const audioDataUrl = `data:${audioBlob.type};base64,${base64}`;
           
           // 本地播放仍使用 blob URL
