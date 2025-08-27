@@ -4604,17 +4604,14 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     splitTTSBuffer(buffer) {
-      // 移除buffer中的emoji
-      buffer = buffer.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
-      // 移除常见的markdown符号，例如：**  --- 
-      buffer = buffer.replace(/[*_~`]/g, '');
-      // 移除常见的markdown符号，例如以 - 开头的行
-      buffer = buffer.replace(/^\s*- /gm, '');
-      // 匹配markdown中的链接,[]()，并替换为空字符串
-      buffer = buffer.replace(/!\[.*?\]\(.*?\)/g, '');
-      buffer = buffer.replace(/\[.*?\]\(.*?\)/g, '');
-      // HTML标签替换为空字符串
-      buffer = buffer.replace(/<[^>]*>/g, '');
+      // 1. 一次性清理：emoji + markdown/HTML（只扫一次）
+      buffer = buffer
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')  // emoji
+        .replace(/[*_~`]/g, '')                          // 行内 markdown
+        .replace(/^\s*-\s/gm, '')                       // 列表
+        .replace(/!\[.*?\]\(.*?\)/g, '')                // 图片
+        .replace(/\[.*?\]\(.*?\)/g, '')                 // 链接
+        .replace(/<[^>]*>/g, '');                       // HTML 标签
 
       if (!buffer || buffer.trim() === '') {
         return { chunks: [], remaining: buffer };
@@ -4703,33 +4700,30 @@ let vue_methods = {
       
       let max_concurrency = 1;
       let nextIndex = 0;
+      let remainingText = lastMessage.ttsChunks?.[0] || '';
 
+      for (const exp of this.expressionMap) {
+        const regex = new RegExp(exp, 'g');
+        if (remainingText.includes(exp)) {
+          remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+        }
+      }
+      // 检查remainingText是否包含中文字符
+      const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
+
+      if ((hasChinese && remainingText?.length > 5) || 
+          (!hasChinese && remainingText?.length > 10)) {
+          // 在lastMessage.ttsChunks开头第一个元素前插入内容
+          if (this.ttsSettings.bufferWordList.length > 0) {
+              // 随机选择this.ttsSettings.bufferWordList中的一个单词
+              const bufferWord = this.ttsSettings.bufferWordList[
+                  Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
+              ];
+              lastMessage.ttsChunks.unshift(bufferWord);
+          }
+      }
       while (this.TTSrunning) {
         max_concurrency = this.ttsSettings.maxConcurrency || 1; // 最大并发数
-        if (nextIndex == 0){
-          let remainingText = lastMessage.ttsChunks?.[0] || '';
-
-          for (const exp of this.expressionMap) {
-            const regex = new RegExp(exp, 'g');
-            if (remainingText.includes(exp)) {
-              remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
-            }
-          }
-          // 检查remainingText是否包含中文字符
-          const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
-
-          if ((hasChinese && remainingText?.length > 5) || 
-              (!hasChinese && remainingText?.length > 10)) {
-              // 在lastMessage.ttsChunks开头第一个元素前插入内容
-              if (this.ttsSettings.bufferWordList.length > 0) {
-                  // 随机选择this.ttsSettings.bufferWordList中的一个单词
-                  const bufferWord = this.ttsSettings.bufferWordList[
-                      Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
-                  ];
-                  lastMessage.ttsChunks.unshift(bufferWord);
-              }
-          }
-        }
         while (lastMessage.ttsQueue.size < max_concurrency && 
               nextIndex < lastMessage.ttsChunks.length) {
           if (!this.TTSrunning) break;
@@ -4766,7 +4760,7 @@ let vue_methods = {
         const response = await fetch(`/tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: chunk_text, index })
+          body: JSON.stringify({ ttsSettings: this.ttsSettings,text: chunk_text, index })
         });
 
         if (response.ok) {
@@ -5198,7 +5192,7 @@ let vue_methods = {
     },
     
     // 发送 TTS 状态到 VRM
-    sendTTSStatusToVRM(type, data) {
+    async sendTTSStatusToVRM(type, data) {
       if (this.ttsWebSocket && this.wsConnected) {
         this.ttsWebSocket.send(JSON.stringify({
           type,

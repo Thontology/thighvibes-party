@@ -4046,13 +4046,12 @@ async def get_tts_status():
 @app.post("/tts")
 async def text_to_speech(request: Request):
     try:
-        settings = await load_settings()
         data = await request.json()
         text = data['text']
         if text == "":
             return JSONResponse(status_code=400, content={"error": "Text is empty"})
+        tts_settings = data['ttsSettings']
         index = data['index']
-        tts_settings = settings.get('ttsSettings', {})
         tts_engine = tts_settings.get('engine', 'edgetts')
         
         if tts_engine == 'edgetts':
@@ -4160,7 +4159,7 @@ async def text_to_speech(request: Request):
                 "streaming_mode": True,
                 "text_split_method": "cut5",
                 "media_type": "ogg",
-                "batch_size": 1
+                "batch_size": 4
             }
             
             # 添加可选参数
