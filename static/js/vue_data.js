@@ -435,7 +435,10 @@ let vue_data = {
       base_url: "",
       api_key: "",
       openaiVoice:"alloy",
-      openaiSpeed: 1.0
+      openaiSpeed: 1.0,
+      customTTSserver: "http://127.0.0.1:9880",
+      customTTSspeaker: "",
+      customTTSspeed: 1.0,
     },
     openaiVoices:['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
     showVrmModelDialog: false,

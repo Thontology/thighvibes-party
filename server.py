@@ -4087,6 +4087,47 @@ async def text_to_speech(request: Request):
                     "X-Audio-Index": str(index)
                 }
             )
+        elif tts_engine == 'customTTS':
+            # 从设置中获取 custom_tts 配置
+            custom_tts_config = {
+                'server': tts_settings.get('customTTSserver', 'http://127.0.0.1:9880'),
+                'speaker': tts_settings.get('customTTSspeaker', ''),  # 默认说话人
+                'speed': tts_settings.get('customTTSspeed', 1.0),  # 默认语速
+            }
+
+            print(f"Using Custom TTS with server: {custom_tts_config['server']}, speaker: {custom_tts_config['speaker']}")
+
+            # 构造 GET 请求参数
+            params = {
+                "text": text,
+                "speaker": custom_tts_config['speaker'],
+                "speed": custom_tts_config['speed']
+            }
+
+            async def generate_audio():
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    try:
+                        # 发起流式 GET 请求到本地 Custom TTS 服务
+                        async with client.stream(
+                            "GET",
+                            custom_tts_config['server'],
+                            params=params
+                        ) as response:
+                            response.raise_for_status()
+                            async for chunk in response.aiter_bytes():
+                                yield chunk
+                    except httpx.RequestError as e:
+                        print(f"Custom TTS 请求失败: {e}")
+                        raise HTTPException(status_code=502, detail=f"Custom TTS 连接失败: {str(e)}")
+
+            return StreamingResponse(
+                generate_audio(),
+                media_type="audio/wav",
+                headers={
+                    "Content-Disposition": f"inline; filename=tts_{index}.wav",
+                    "X-Audio-Index": str(index)
+                }
+            )
         # GSV处理逻辑
         elif tts_engine == 'GSV':
             # 从设置获取所有参数并提供默认值

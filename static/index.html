@@ -2042,6 +2042,7 @@ if ('serviceWorker' in navigator) {
                           <el-option label="Edge TTS" value="edgetts" ></el-option>
                           <el-option label="GPT Sovits" value="GSV" ></el-option>
                           <el-option :label="t('openaiLike')" value="openai" ></el-option>
+                          <el-option :label="t('customTTS')" value="customTTS" ></el-option>
                         </el-select>
                       </el-form-item>
                       <el-form-item :label="t('separators')">
@@ -2210,6 +2211,47 @@ if ('serviceWorker' in navigator) {
                       </template>
                     </el-alert>
                   </div>
+
+                  <div class="tool-item" v-show="ttsSettings.engine === 'customTTS'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          {{t('customTTS')}}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="tool-content">
+                      <el-form-item :label="t('customTTSserver')" class="form-item-align">
+                        <el-input
+                          v-model="ttsSettings.customTTSserver"
+                          :placeholder="t('customTTSServerPlaceholder')"
+                          @input="autoSaveSettings"
+                          class="full-width-input"
+                        />
+                      </el-form-item>
+                      <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
+                        <el-input
+                          v-model="ttsSettings.customTTSspeaker"
+                          :placeholder="t('customTTSspeakerPlaceholder')"
+                          @input="autoSaveSettings"
+                          class="full-width-input"
+                        />
+                      </el-form-item>
+                      <!-- 语速滑动条 -->
+                      <el-form-item :label="t('customTTSspeed')" class="form-item-align">
+                        <el-slider
+                          v-model="ttsSettings.customTTSspeed"
+                          :min="0.1"
+                          :max="2"
+                          :step="0.1"
+                          @change="autoSaveSettings">
+                      </el-form-item>
+                    </div>
+                  </div>
+
                   <div class="tool-item" v-show="ttsSettings.engine === 'edgetts'">
                     <div class="tool-header">
                       <div class="header-left">
