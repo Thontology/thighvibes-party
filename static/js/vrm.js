@@ -515,9 +515,20 @@ class IdleAnimationManager {
         
         // 更新索引（循环）
         //  this.currentIndex = (this.currentIndex + 1) % this.animationQueue.length;
+        // 更新索引（随机，且不与上一次相同）
+        const previousIndex = this.currentIndex;
+        const length = this.animationQueue.length;
 
-        //  更新索引（随机）
-        this.currentIndex = Math.floor(Math.random() * this.animationQueue.length);
+        // 如果队列长度小于2，无法保证不重复，直接返回或不做处理
+        if (length < 2) {
+            this.currentIndex = 0; // 或保持原值，视需求而定
+        } else {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * length);
+            } while (newIndex === previousIndex);
+            this.currentIndex = newIndex;
+        }
     }
     
     // 播放指定的VRMA动画 - 改进版本
