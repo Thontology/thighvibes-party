@@ -94,16 +94,20 @@ if ('serviceWorker' in navigator) {
     <!-- 顶部栏 -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
-      <el-button 
-        v-if="updateDownloaded"
-        @click="handleUpdateAction" 
-        class="top-bar-btn update-btn installed"
-        text>
-        <el-icon>
-          <i class="fa-solid fa-rocket"></i>
-        </el-icon>
-        {{ t('installNow') }}
-      </el-button>
+        <el-button 
+          v-if="updateAvailable"
+          @click="handleUpdateAction" 
+          class="top-bar-btn update-btn"
+          :class="{ 'installed': updateDownloaded }"
+          text>
+          <el-icon>
+            <i :class="updateIcon"></i>
+          </el-icon>
+          {{ updateButtonText }}
+          <span v-if="downloadProgress > 0 && !updateDownloaded" class="progress-text">
+            ({{ downloadProgress }}%)
+          </span>
+        </el-button>
       <!-- 添加移动端菜单按钮 -->
       <el-button 
       class="top-bar-btn"
