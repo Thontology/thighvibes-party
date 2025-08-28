@@ -4336,6 +4336,10 @@ let vue_methods = {
 
     // 修改：初始化VAD（Web Speech模式也使用VAD）
     async initVAD() {
+      let min_probabilities = 0.2;
+      if (this.asrSettings.engine === 'webSpeech') {
+        min_probabilities = 0.7;
+      }
       // 初始化VAD
       this.vad = await vad.MicVAD.new({
         preSpeechPadFrames: 10,
@@ -4345,7 +4349,7 @@ let vue_methods = {
         },
         onFrameProcessed: (probabilities, frame) => {
           // 处理每一帧
-          if (probabilities["isSpeech"] > 0.2) {
+          if (probabilities["isSpeech"] > min_probabilities) {
             if (this.ttsSettings.enabledInterruption) {
               // 关闭正在播放的音频
               if (this.currentAudio) {
