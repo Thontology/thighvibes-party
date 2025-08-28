@@ -716,6 +716,16 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
+            <el-tooltip :content="t('mainModel')" placement="top">
+              <el-button
+                @click="showModelDialog = true"
+                class="icon-btn knowledge-base-btn"
+                type='default'
+                circle>
+                <i class="fa-solid fa-microchip"></i>
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip :content="isInputExpanded ? t('collapseInput') : t('expandInput')" placement="top">
                 <el-button 
                     @click="toggleInputExpand"
@@ -756,16 +766,6 @@ if ('serviceWorker' in navigator) {
                 v-if="!isBtnCollapse"
                 circle>
                 <i class="fa-solid fa-image"></i>
-              </el-button>
-            </el-tooltip>
-
-            <el-tooltip :content="t('mainModel')" placement="top">
-              <el-button
-                @click="showModelDialog = true"
-                class="icon-btn knowledge-base-btn"
-                type='default'
-                circle>
-                <i class="fa-solid fa-microchip"></i>
               </el-button>
             </el-tooltip>
 
