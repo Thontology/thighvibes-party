@@ -2076,7 +2076,7 @@ if ('serviceWorker' in navigator) {
                         :step="1"
                         @change="autoSaveSettings">
                     </el-form-item>
-                    <el-form-item :label="t('bufferWord')" required>
+                    <el-form-item :label="t('bufferWord')">
                       <el-select
                         v-model="ttsSettings.bufferWordList"
                         multiple
