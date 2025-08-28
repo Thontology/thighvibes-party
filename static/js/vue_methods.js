@@ -4701,7 +4701,7 @@ let vue_methods = {
       while (this.TTSrunning) {
         if (nextIndex == 0){
           let remainingText = lastMessage.ttsChunks?.[0] || '';
-          if (remainingText){
+          if (remainingText && this.ttsSettings.bufferWordList.length > 0){
             for (const exp of this.expressionMap) {
               const regex = new RegExp(exp, 'g');
               if (remainingText.includes(exp)) {
