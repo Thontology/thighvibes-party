@@ -4139,6 +4139,9 @@ async def text_to_speech(request: Request):
                 'ref_audio': tts_settings.get('gsvRefAudioPath', '')
             }
             audio_path = os.path.join(UPLOAD_FILES_DIR, gsv_config['ref_audio'])
+            if not os.path.exists(audio_path):
+                # 如果音频文件不存在，则认为是相对路径
+                audio_path = gsv_config['ref_audio']
             print(f"GSV参数: {gsv_config},音频地址:{audio_path}")
             # 动态样本步数设置
             sample_steps = 4
@@ -4159,7 +4162,7 @@ async def text_to_speech(request: Request):
                 "streaming_mode": True,
                 "text_split_method": "cut5",
                 "media_type": "ogg",
-                "batch_size": 4
+                "batch_size": 1
             }
             
             # 添加可选参数

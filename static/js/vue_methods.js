@@ -1183,7 +1183,6 @@ let vue_methods = {
                 fileLinks = data.fileLinks;
                 // data.textFiles 添加到 this.textFiles
                 this.textFiles = [...this.textFiles, ...data.textFiles];
-                await this.autoSaveSettings();
             } else {
                 showNotification(this.t('file_upload_failed'), 'error');
             }
@@ -1224,7 +1223,6 @@ let vue_methods = {
                 imageLinks = data.fileLinks;
                 // data.imageFiles 添加到 this.imageFiles
                 this.imageFiles = [...this.imageFiles, ...data.imageFiles];
-                await this.autoSaveSettings();
               } else {
                 showNotification(this.t('file_upload_failed'), 'error');
               }
@@ -1348,7 +1346,7 @@ let vue_methods = {
           conv.system_prompt = this.system_prompt;
         }
       }
-      await this.autoSaveSettings();
+      this.autoSaveSettings();
       try {
         console.log('Sending message...');
         // 请求参数需要与后端接口一致
@@ -1539,7 +1537,7 @@ let vue_methods = {
         this.isSending = false;
         this.isTyping = false;
         this.abortController = null;
-        await this.autoSaveSettings();
+        this.autoSaveSettings();
       }
     },
     async translateMessage(index) {
@@ -1808,7 +1806,7 @@ let vue_methods = {
       this.asyncToolsID = [];
       this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
-      await this.autoSaveSettings();
+      this.autoSaveSettings();
     },
     async sendFiles() {
       this.showUploadDialog = true;
@@ -4700,29 +4698,33 @@ let vue_methods = {
       
       let max_concurrency = 1;
       let nextIndex = 0;
-      let remainingText = lastMessage.ttsChunks?.[0] || '';
-
-      for (const exp of this.expressionMap) {
-        const regex = new RegExp(exp, 'g');
-        if (remainingText.includes(exp)) {
-          remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
-        }
-      }
-      // 检查remainingText是否包含中文字符
-      const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
-
-      if ((hasChinese && remainingText?.length > 5) || 
-          (!hasChinese && remainingText?.length > 10)) {
-          // 在lastMessage.ttsChunks开头第一个元素前插入内容
-          if (this.ttsSettings.bufferWordList.length > 0) {
-              // 随机选择this.ttsSettings.bufferWordList中的一个单词
-              const bufferWord = this.ttsSettings.bufferWordList[
-                  Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
-              ];
-              lastMessage.ttsChunks.unshift(bufferWord);
-          }
-      }
       while (this.TTSrunning) {
+        if (nextIndex == 0){
+          let remainingText = lastMessage.ttsChunks?.[0] || '';
+          if (remainingText){
+            for (const exp of this.expressionMap) {
+              const regex = new RegExp(exp, 'g');
+              if (remainingText.includes(exp)) {
+                remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+              }
+            }
+            // 检查remainingText是否包含中文字符
+            const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
+
+            if ((hasChinese && remainingText?.length > 5) || 
+                (!hasChinese && remainingText?.length > 10)) {
+                // 在lastMessage.ttsChunks开头第一个元素前插入内容
+                if (this.ttsSettings.bufferWordList.length > 0) {
+                    // 随机选择this.ttsSettings.bufferWordList中的一个单词
+                    const bufferWord = this.ttsSettings.bufferWordList[
+                        Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
+                    ];
+                    lastMessage.ttsChunks.unshift(bufferWord);
+                }
+            }
+          }
+        }
+
         max_concurrency = this.ttsSettings.maxConcurrency || 1; // 最大并发数
         while (lastMessage.ttsQueue.size < max_concurrency && 
               nextIndex < lastMessage.ttsChunks.length) {
@@ -5019,9 +5021,28 @@ let vue_methods = {
   
   // 上传参考音频
   async uploadGsvAudio() {
-    if (!this.newGsvAudio.file) {
+    if (!this.newGsvAudio.file && !this.newGsvAudio.path) {
       showNotification('请先选择音频文件', 'error');
       return;
+    }
+    if (!this.newGsvAudio.file) {
+        // 添加新音频到选项列表
+        const newAudioOption = {
+          path: this.newGsvAudio.path,
+          name: this.newGsvAudio.name,
+          text: this.newGsvAudio.text
+        };
+        
+        this.ttsSettings.gsvAudioOptions.push(newAudioOption);
+        
+        // 关闭对话框并重置状态
+        this.cancelGsvAudioUpload();
+        
+        // 自动保存设置
+        await this.autoSaveSettings();
+        
+        showNotification('参考音频上传成功');
+        return;
     }
     
     const formData = new FormData();
@@ -5086,7 +5107,12 @@ let vue_methods = {
       );
       
       if (audioIndex === -1) return;
-      
+      if (this.ttsSettings.gsvAudioOptions[audioIndex].path == this.ttsSettings.gsvAudioOptions[audioIndex].name){
+        // 为路径上传的音频，直接从选项中移除
+        this.ttsSettings.gsvAudioOptions.splice(audioIndex, 1);
+        showNotification('音频已删除');
+        return;
+      }
       // 获取文件名用于后端删除
       const uniqueFilename = this.ttsSettings.gsvAudioOptions[audioIndex].path
         .split('/')
@@ -6081,6 +6107,11 @@ let vue_methods = {
       await this.autoSaveSettings();
     } catch (error) {
       // 用户取消操作
+    }
+  },
+  changeGsvAudioPath() {
+    if (this.newGsvAudio.path) {
+      this.newGsvAudio.name = this.newGsvAudio.path;
     }
   },
 }

@@ -727,6 +727,8 @@ key3`,
         'customTTSspeaker': '自定义TTS音色',
         'customTTSspeakerPlaceholder': '请输入自定义TTS音色',
         'customTTSspeed': '自定义TTS语速',
+        'gsvGsvAudioPath': '参考音频路径（如果上传了文件可不填）',
+        'gsvGsvAudioPathPlaceholder': '请输入参考音频路径',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1453,5 +1455,7 @@ Key3`,
         'customTTSspeaker': 'Custom TTS speaker',
         'customTTSspeakerPlaceholder': 'Please enter the custom TTS speaker',
         'customTTSspeed': 'Custom TTS speed',
+        'gsvGsvAudioPath':'Refer to the audio path (if the file is uploaded, leave it blank)',
+        'gsvGsvAudioPathPlaceholder': 'Please enter the audio path',
     }
   };

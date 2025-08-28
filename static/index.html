@@ -2460,7 +2460,7 @@ if ('serviceWorker' in navigator) {
                       </div>
                       
                       <!-- 文件列表 -->
-                      <div class="compact-file-list" v-if="newGsvAudio.name">
+                      <div class="compact-file-list" v-if="newGsvAudio.file">
                         <div class="compact-file-item">
                           <span class="file-name">@{{ newGsvAudio.name }}</span>
                           <el-button
@@ -2472,13 +2472,20 @@ if ('serviceWorker' in navigator) {
                           </el-button>
                         </div>
                       </div>
-
+                    </div>
+                    <el-form-item :label="t('gsvGsvAudioPath')" class="form-item-align" v-if="!newGsvAudio.file">
+                      <el-input
+                        v-model="newGsvAudio.path"
+                        :placeholder="t('gsvGsvAudioPathPlaceholder')"
+                        @input="changeGsvAudioPath"
+                      ></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('gsvPromptText')" class="form-item-align">
                       <el-input
                         v-model="newGsvAudio.text"
-                        :label="t('gsvPromptText')"
                         :placeholder="t('gsvPromptTextPlaceholder')"
-                      />
-                    </div>
+                      ></el-input>
+                    </el-form-item>
                     <template #footer>
                       <el-button @click="cancelGsvAudioUpload">{{ t('cancel') }}</el-button>
                       <el-button type="primary" @click="uploadGsvAudio" :disabled="!newGsvAudio.name">
