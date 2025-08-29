@@ -1137,6 +1137,8 @@ let vue_methods = {
     async sendMessage() { 
       if (!this.userInput.trim() || this.isTyping) return;
       this.isTyping = true;
+      // 开始计时
+      this.startTimer();
       if (this.ttsSettings.enabledInterruption) {
         // 关闭正在播放的音频
         if (this.currentAudio){
@@ -1415,6 +1417,11 @@ let vue_methods = {
               try {
                 const parsed = JSON.parse(jsonStr);
                 const lastMessage = this.messages[this.messages.length - 1];
+                if (lastMessage.content == '') {
+                  // 结束计时并打印时间
+                  this.stopTimer();
+                  console.log(`first token processed in ${this.elapsedTime}ms`);
+                }
                 if (parsed.choices?.[0]?.delta?.content) {
                   tts_buffer += parsed.choices[0].delta.content;
                   // 处理 TTS 分割
@@ -4740,13 +4747,25 @@ let vue_methods = {
           this.processTTSChunk(lastMessage, index).finally(() => {
             lastMessage.ttsQueue.delete(index);
           });
+          if (index == 0){
+            // 结束计时并打印时间
+            this.stopTimer();
+            console.log(`TTS chunk 0 start in ${this.elapsedTime}ms`);
+            // 延迟0.8秒，让TTS首包更快
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
         }
         
         await new Promise(resolve => setTimeout(resolve, 10));
       }
       console.log('TTS queue processing completed');
     },
-
+    startTimer() {
+      this.startTime = Date.now();
+    },
+    stopTimer() {
+      this.elapsedTime = Date.now() - this.startTime;
+    },
     async processTTSChunk(message, index) {
       const chunk = message.ttsChunks[index];
       const exps = [];
@@ -4786,7 +4805,11 @@ let vue_methods = {
             text: chunk_text,
             index 
           };
-
+          if (index == 0){
+            // 结束计时并打印时间
+            this.stopTimer();
+            console.log(`TTS chunk ${index} processed in ${this.elapsedTime}ms`);
+          }
           // 转换为 Base64
           const base64 = await new Promise((resolve, reject) => {
             const reader = new FileReader();

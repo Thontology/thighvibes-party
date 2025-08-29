@@ -4129,20 +4129,10 @@ async def text_to_speech(request: Request):
             )
         # GSV处理逻辑
         elif tts_engine == 'GSV':
-            # 从设置获取所有参数并提供默认值
-            gsv_config = {
-                'server': tts_settings.get('gsvServer', 'http://127.0.0.1:9880'),
-                'text_lang': tts_settings.get('gsvTextLang', 'zh'),
-                'speed': tts_settings.get('gsvRate', 1.0),
-                'prompt_lang': tts_settings.get('gsvPromptLang', 'zh'),
-                'prompt_text': tts_settings.get('gsvPromptText', ''),
-                'ref_audio': tts_settings.get('gsvRefAudioPath', '')
-            }
-            audio_path = os.path.join(UPLOAD_FILES_DIR, gsv_config['ref_audio'])
+            audio_path = os.path.join(UPLOAD_FILES_DIR, tts_settings.get('gsvRefAudioPath', ''))
             if not os.path.exists(audio_path):
                 # 如果音频文件不存在，则认为是相对路径
-                audio_path = gsv_config['ref_audio']
-            print(f"GSV参数: {gsv_config},音频地址:{audio_path}")
+                audio_path = tts_settings.get('gsvRefAudioPath', '')
             # 动态样本步数设置
             sample_steps = 4
             if index == 1:
@@ -4153,31 +4143,25 @@ async def text_to_speech(request: Request):
             # 构建核心请求参数
             gsv_params = {
                 "text": text,
-                "text_lang": gsv_config['text_lang'],
+                "text_lang": tts_settings.get('gsvTextLang', 'zh'),
                 "ref_audio_path": audio_path,
-                "prompt_lang": gsv_config['prompt_lang'],
-                "prompt_text": gsv_config['prompt_text'],
-                "speed_factor": gsv_config['speed'],
+                "prompt_lang": tts_settings.get('gsvPromptLang', 'zh'),
+                "prompt_text": tts_settings.get('gsvPromptText', ''),
+                "speed_factor": tts_settings.get('gsvRate', 1.0),
                 "sample_steps": sample_steps,
                 "streaming_mode": True,
-                "text_split_method": "cut5",
+                "text_split_method": "cut0",
                 "media_type": "ogg",
-                "batch_size": 1
+                "batch_size": 20,
+                "seed": 42,
             }
-            
-            # 添加可选参数
-            optional_params = ["top_k", "top_p", "temperature", "batch_threshold", 
-                              "split_bucket", "seed", "parallel_infer", "repetition_penalty"]
-            for param in optional_params:
-                if param in data:
-                    gsv_params[param] = data[param]
-
+            gsvServer = tts_settings.get('gsvServer', 'http://127.0.0.1:9880')
             async def generate_audio():
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     try:
                         async with client.stream(
                             "POST",
-                            f"{gsv_config['server']}/tts",
+                            f"{gsvServer}/tts",
                             json=gsv_params
                         ) as response:
                             response.raise_for_status()

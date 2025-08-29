@@ -479,6 +479,8 @@ let vue_data = {
       path: '',
       text: '',
     },
+    startTime: null,
+    elapsedTime: 0,
     gsvTextLangs:["zh", "en" , "yue","ja","ko","auto","auto_yue"],
     audioPlayQueue: [],
     currentAudio: null,
