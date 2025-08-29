@@ -1386,8 +1386,8 @@ let vue_methods = {
         });
         if (this.ttsSettings.enabled) {
           // 启动TTS和音频播放进程
-          const ttsProcess = this.startTTSProcess();
-          const audioProcess = this.startAudioPlayProcess();
+          this.startTTSProcess();
+          this.startAudioPlayProcess();
         }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -1414,10 +1414,22 @@ let vue_methods = {
               
               try {
                 const parsed = JSON.parse(jsonStr);
-                
+                const lastMessage = this.messages[this.messages.length - 1];
+                if (parsed.choices?.[0]?.delta?.content) {
+                  tts_buffer += parsed.choices[0].delta.content;
+                  // 处理 TTS 分割
+                  if (this.ttsSettings.enabled) {
+                    const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
+                    // 将完整的句子添加到 ttsChunks
+                    if (chunks.length > 0) {
+                      lastMessage.ttsChunks.push(...chunks);
+                    }
+                    // 更新 tts_buffer 为剩余部分
+                    tts_buffer = remaining;
+                  }
+                }
                 // 处理 reasoning_content 逻辑
                 if (parsed.choices?.[0]?.delta?.reasoning_content || parsed.choices?.[0]?.delta?.tool_content) {
-                  const lastMessage = this.messages[this.messages.length - 1];
                   let newContent = '';
                   if (parsed.choices?.[0]?.delta?.reasoning_content) {
                     newContent = parsed.choices[0].delta.reasoning_content;
@@ -1452,17 +1464,6 @@ let vue_methods = {
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
                   lastMessage.pure_content += parsed.choices[0].delta.content;
-                  tts_buffer += parsed.choices[0].delta.content;
-                  // 处理 TTS 分割
-                  if (this.ttsSettings.enabled) {
-                    const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
-                    // 将完整的句子添加到 ttsChunks
-                    if (chunks.length > 0) {
-                      lastMessage.ttsChunks.push(...chunks);
-                    }
-                    // 更新 tts_buffer 为剩余部分
-                    tts_buffer = remaining;
-                  }
                   this.scrollToBottom();
                 }
                 if (parsed.choices?.[0]?.delta?.async_tool_id) {
@@ -4750,16 +4751,20 @@ let vue_methods = {
       const chunk = message.ttsChunks[index];
       const exps = [];
       let remainingText = chunk;
-
-      for (const exp of this.expressionMap) {
-        const regex = new RegExp(exp, 'g');
-        if (remainingText.includes(exp)) {
-          exps.push(exp);
-          remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+      let chunk_text = remainingText;
+      let chunk_expressions = exps;
+      if (chunk.indexOf('<') !== -1){
+        // 包含表情
+        for (const exp of this.expressionMap) {
+          const regex = new RegExp(exp, 'g');
+          if (remainingText.includes(exp)) {
+            exps.push(exp);
+            remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+          }
         }
+        chunk_text = remainingText;
+        chunk_expressions = exps;
       }
-      const chunk_text = remainingText;
-      const chunk_expressions = exps;
       console.log(`Processing TTS chunk ${index}:`, chunk_text);
       
       try {
@@ -4772,16 +4777,7 @@ let vue_methods = {
         if (response.ok) {
           const audioBlob = await response.blob();
           
-          // 转换为 Base64
-          const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload  = () => resolve(reader.result.split(',')[1]); // 去掉 data:*
-            reader.onerror = reject;
-            reader.readAsDataURL(audioBlob);
-          });
-          const audioDataUrl = `data:${audioBlob.type};base64,${base64}`;
-          
-          // 本地播放仍使用 blob URL
+          // 本地播放 blob URL
           const audioUrl = URL.createObjectURL(audioBlob);
           
           message.audioChunks[index] = { 
@@ -4790,6 +4786,15 @@ let vue_methods = {
             text: chunk_text,
             index 
           };
+
+          // 转换为 Base64
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result.split(',')[1]); // 去掉 data:*
+            reader.onerror = reject;
+            reader.readAsDataURL(audioBlob);
+          });
+          const audioDataUrl = `data:${audioBlob.type};base64,${base64}`;
           this.cur_audioDatas[index]= audioDataUrl;
           console.log(`TTS chunk ${index} processed`);
           this.checkAudioPlayback();
