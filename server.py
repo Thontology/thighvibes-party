@@ -4,6 +4,7 @@ import glob
 from io import BytesIO
 import os
 from pathlib import Path
+import random
 import socket
 import sys
 import tempfile
@@ -4087,29 +4088,28 @@ async def text_to_speech(request: Request):
                 }
             )
         elif tts_engine == 'customTTS':
-            # 从设置中获取 custom_tts 配置
-            custom_tts_config = {
-                'server': tts_settings.get('customTTSserver', 'http://127.0.0.1:9880'),
-                'speaker': tts_settings.get('customTTSspeaker', ''),  # 默认说话人
-                'speed': tts_settings.get('customTTSspeed', 1.0),  # 默认语速
-            }
-
-            print(f"Using Custom TTS with server: {custom_tts_config['server']}, speaker: {custom_tts_config['speaker']}")
-
             # 构造 GET 请求参数
             params = {
                 "text": text,
-                "speaker": custom_tts_config['speaker'],
-                "speed": custom_tts_config['speed']
+                "speaker": tts_settings.get('customTTSspeaker', ''),
+                "speed":tts_settings.get('customTTSspeed', 1.0)
             }
-
+            # 按行分割
+            custom_tts_servers_list = tts_settings.get('customTTSserver', 'http://127.0.0.1:9880').split('\n')
+            if len(custom_tts_servers_list) == 1:
+                custom_tt_server = custom_tts_servers_list[0]
+            else:
+                # 移除空行
+                custom_tts_servers_list = [server for server in custom_tts_servers_list if server.strip()]
+                # 根据index选择服务器
+                custom_tt_server = custom_tts_servers_list[index % len(custom_tts_servers_list)]
             async def generate_audio():
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     try:
                         # 发起流式 GET 请求到本地 Custom TTS 服务
                         async with client.stream(
                             "GET",
-                            custom_tts_config['server'],
+                            custom_tt_server,
                             params=params
                         ) as response:
                             response.raise_for_status()
@@ -4155,7 +4155,15 @@ async def text_to_speech(request: Request):
                 "batch_size": 20,
                 "seed": 42,
             }
-            gsvServer = tts_settings.get('gsvServer', 'http://127.0.0.1:9880')
+            # 按行分割
+            gsvServer_list = tts_settings.get('gsvServer', 'http://127.0.0.1:9880').split('\n')
+            if len(gsvServer_list) == 1:
+                gsvServer = gsvServer_list[0]
+            else:
+                # 移除空行
+                gsvServer_list = [server for server in gsvServer_list if server.strip()]
+                # 根据index选择服务器
+                gsvServer = gsvServer_list[index % len(gsvServer_list)]
             async def generate_audio():
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     try:

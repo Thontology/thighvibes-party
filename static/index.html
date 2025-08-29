@@ -2229,7 +2229,7 @@ if ('serviceWorker' in navigator) {
                           v-model="ttsSettings.customTTSserver"
                           :placeholder="t('customTTSServerPlaceholder')"
                           @input="autoSaveSettings"
-                          class="full-width-input"
+                          type="textarea"
                         />
                       </el-form-item>
                       <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
@@ -2349,7 +2349,7 @@ if ('serviceWorker' in navigator) {
                           v-model="ttsSettings.gsvServer"
                           :placeholder="t('gsvServerPlaceholder')"
                           @input="autoSaveSettings"
-                          class="full-width-input"
+                          type="textarea"
                         />
                       </el-form-item>
 
