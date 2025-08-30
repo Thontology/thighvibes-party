@@ -5620,6 +5620,7 @@ let vue_methods = {
   async processDanmuQueue() {
     try {
       console.log(this.danmu);
+      const lastMessage = this.messages[this.messages.length - 1];
       if(this.TTSrunning && this.ttsSettings.enabled){
         if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
           console.log('All audio chunks played');
