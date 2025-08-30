@@ -4621,7 +4621,6 @@ let vue_methods = {
         .replace(/^\s*-\s/gm, '')                       // 列表
         .replace(/!\[.*?\]\(.*?\)/g, '')                // 图片
         .replace(/\[.*?\]\(.*?\)/g, '')                 // 链接
-        .replace(/<[^>]*>/g, '');                       // HTML 标签
 
       if (!buffer || buffer.trim() === '') {
         return { chunks: [], remaining: buffer };
@@ -4720,6 +4719,8 @@ let vue_methods = {
                 remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
               }
             }
+            // 移除HTML标签
+            remainingText = remainingText.replace(/<[^>]+>/g, '');
             // 检查remainingText是否包含中文字符
             const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
 
