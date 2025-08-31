@@ -30,41 +30,6 @@
 
 - ✅ Compatible and adaptable across all platforms: It covers the native running environments of Windows/macOS/Linux, supports Docker containerized deployment and web-based cloud services, and meets the needs of multi-scene technology stacks.
 
-![image](doc/image/demo.png)
-
-## Software Screenshots
-
-### Multi-Service Provider Support: Supports both locally deployed engines (e.g., Ollama, Dify) and cloud service provider APIs.
-![image](doc/image/model1.jpeg)
-
-### Extensive Tool Integration: Built-in various tools (e.g., knowledge base, web search, smart home control, browser automation), supporting asynchronous invocation without blocking agent responses.
-![image](doc/image/HA2.jpeg)
-
-### VRM Desktop Pet: Supports uploading custom VRM models to create a personalized desktop companion.
-![image](doc/image/vrmbot3.jpeg)
-
-### Tavern Character Cards: Supports Tavern character cards with long-term memory capabilities.
-![image](doc/image/card4.jpeg)
-
-### WeChat Bot: Non-intrusively takes control of your WeChat by simulating user operations, minimizing the risk of account restrictions.
-![image](doc/image/wxbot5.jpeg)
-
-### QQ Bot: Supports one-click deployment to the official QQ bot platform, enabling users to access the agent anytime, anywhere.
-![image](doc/image/qqbot6.jpeg)
-
-### Developer-Friendly: Provides open OpenAI API and MCP interfaces, allowing the agent to be exposed externally.
-![image](doc/image/API7.jpeg)
-
-### ComfyUI Integration: Converts ComfyUI workflows into agent tools with load balancing across multiple ComfyUI servers.
-![image](doc/image/comfyui8.jpeg)
-
-## Hardware requirements
-
-- CPU: 2 cores or more
-- Memory: 2GB or more
-
-**Because all models are optional, you can access the local deployment engine, or you can all use the Cloud as a Service provider interface, so there are few hardware requirements. Test the docker version on the 2-core 2G Cloud as a Service server and it will work fine**
-
 ## Quick Start
 
 ### Windows Desktop Installation
@@ -135,6 +100,39 @@ We provide two mainstream Linux installation package formats for your convenienc
   chmod +x start_with_dev.sh
   ./start_with_dev.sh
   ```
+
+## Software Screenshots
+
+### Multi-Service Provider Support: Supports both locally deployed engines (e.g., Ollama, Dify) and cloud service provider APIs.
+![image](doc/image/model1.jpeg)
+
+### Extensive Tool Integration: Built-in various tools (e.g., knowledge base, web search, smart home control, browser automation), supporting asynchronous invocation without blocking agent responses.
+![image](doc/image/HA2.jpeg)
+
+### VRM Desktop Pet: Supports uploading custom VRM models to create a personalized desktop companion.
+![image](doc/image/vrmbot3.jpeg)
+
+### Tavern Character Cards: Supports Tavern character cards with long-term memory capabilities.
+![image](doc/image/card4.jpeg)
+
+### WeChat Bot: Non-intrusively takes control of your WeChat by simulating user operations, minimizing the risk of account restrictions.
+![image](doc/image/wxbot5.jpeg)
+
+### QQ Bot: Supports one-click deployment to the official QQ bot platform, enabling users to access the agent anytime, anywhere.
+![image](doc/image/qqbot6.jpeg)
+
+### Developer-Friendly: Provides open OpenAI API and MCP interfaces, allowing the agent to be exposed externally.
+![image](doc/image/API7.jpeg)
+
+### ComfyUI Integration: Converts ComfyUI workflows into agent tools with load balancing across multiple ComfyUI servers.
+![image](doc/image/comfyui8.jpeg)
+
+## Hardware requirements
+
+- CPU: 2 cores or more
+- Memory: 2GB or more
+
+**Because all models are optional, you can access the local deployment engine, or you can all use the Cloud as a Service provider interface, so there are few hardware requirements. Test the docker version on the 2-core 2G Cloud as a Service server and it will work fine**
 
 ## Usage
 
