@@ -8,10 +8,7 @@ let currentMixer = null;
 let idleAction = null;
 let breathAction = null;
 let blinkAction = null;
-let speechAnimationManager = null; // 新的语音动画管理器
-let speechTimer = null;
-let isInSpeechMode = false;
-let speechTimeout = 5000; // 5秒超时
+
 // renderer
 // 检测运行环境
 const isElectron = typeof require !== 'undefined' || navigator.userAgent.includes('Electron');
@@ -1240,224 +1237,223 @@ function createBlinkClip(vrm) {
     return new THREE.AnimationClip('blink', duration, tracks);
 }
 
-// 修改 createSpeechClip 函数 - 创建一个足够长的clip
-function createSpeechClip(vrm, expressions = []) {
-    if (!vrm.expressionManager) return null;
-    
-    const tracks = [];
-    const maxDuration = 30; // 创建一个30秒的长clip，足够应对大部分情况
-    const fps = 30;
-    const frameCount = maxDuration * fps;
-    
-    const times = [];
-    for (let i = 0; i <= frameCount; i++) {
-        times.push(i / fps);
-    }
-    
-    // 口型动画 - 使用智能模拟
-    const mouthValues = [];
-    const mouthIhValues = [];
-    
-    times.forEach((time, index) => {
-        // 使用多个频率叠加，模拟真实语音的复杂性
-        const baseFreq = 12 + Math.sin(time * 0.5) * 4;
-        const intensity1 = Math.sin(time * baseFreq) * 0.5 + 0.5;
-        const intensity2 = Math.sin(time * baseFreq * 1.3 + 0.5) * 0.3 + 0.3;
-        const intensity3 = Math.sin(time * baseFreq * 0.7 + 1.2) * 0.2 + 0.2;
-        
-        const combinedIntensity = (intensity1 + intensity2 + intensity3) / 3;
-        const randomFactor = 0.8 + Math.random() * 0.4;
-        const finalIntensity = combinedIntensity * randomFactor;
-        
-        let mouthOpen = 0;
-        let mouthIh = 0;
-        
-        if (finalIntensity > 0.15) {
-            mouthOpen = Math.min(Math.max(finalIntensity * 0.8, 0.1), 0.5);
-            const variation = Math.sin(time * 12 + index * 0.1) * 0.1;
-            mouthIh = Math.min(Math.max(0, finalIntensity * 0.3 + variation), 0.3);
-        } else {
-            // 渐进关闭
-            const prevMouthOpen = index > 0 ? mouthValues[index - 1] || 0 : 0;
-            const prevMouthIh = index > 0 ? mouthIhValues[index - 1] || 0 : 0;
-            
-            mouthOpen = Math.max(0, prevMouthOpen * 0.9 - 0.1);
-            mouthIh = Math.max(0, prevMouthIh * 0.85 - 0.1);
-        }
-        
-        mouthValues.push(mouthOpen);
-        mouthIhValues.push(mouthIh);
-    });
-    
-    // 创建口型轨道
-    const mouthTrack = new THREE.NumberKeyframeTrack(
-        vrm.expressionManager.getExpressionTrackName('aa'),
-        times,
-        mouthValues
-    );
-    tracks.push(mouthTrack);
-    
-    const mouthIhTrack = new THREE.NumberKeyframeTrack(
-        vrm.expressionManager.getExpressionTrackName('ih'),
-        times,
-        mouthIhValues
-    );
-    tracks.push(mouthIhTrack);
-    
-    // 处理表情
-    if (expressions.length > 0) {
-        const expression = expressions[0].replace(/<|>/g, '');
-        const expressionValues = [];
-        let max_mouthOpen = 0.5;
-        
-        times.forEach((time, index) => {
-            let value = 0;
-            
-            if (['happy', 'angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
-                value = 1.0;
-                if (expression === 'happy') {
-                    max_mouthOpen = 0.1;
-                }
-            } else if (expression === 'surprised') {
-                value = time < 2 ? 1.0 : 0.0;
-                max_mouthOpen = 0.1;
-            } else if (['blink', 'blinkLeft', 'blinkRight'].includes(expression)) {
-                const totalFrames = fps * 2;
-                const halfFrames = totalFrames / 2;
-                
-                if (index < halfFrames) {
-                    value = Math.min(index / halfFrames + 0.3 , 1);
-                } else if (index < totalFrames) {
-                    value = Math.max(1 - ((index - halfFrames) / halfFrames), 0);
-                } else {
-                    value = 0;
-                }
-            }
-            
-            expressionValues.push(value);
-        });
-        
-        // 根据表情调整口型幅度
-        if (max_mouthOpen < 0.5) {
-            for (let i = 0; i < mouthValues.length; i++) {
-                mouthValues[i] = Math.min(mouthValues[i], max_mouthOpen);
-                mouthIhValues[i] = Math.min(mouthIhValues[i], max_mouthOpen);
-            }
-            
-            // 重新创建口型轨道
-            tracks[0] = new THREE.NumberKeyframeTrack(
-                vrm.expressionManager.getExpressionTrackName('aa'),
-                times,
-                mouthValues
-            );
-            tracks[1] = new THREE.NumberKeyframeTrack(
-                vrm.expressionManager.getExpressionTrackName('ih'),
-                times,
-                mouthIhValues
-            );
-        }
-        
-        const expressionTrack = new THREE.NumberKeyframeTrack(
-            vrm.expressionManager.getExpressionTrackName(expression),
-            times,
-            expressionValues
-        );
-        tracks.push(expressionTrack);
-    }
-    
-    return new THREE.AnimationClip('speech', maxDuration, tracks);
-}
+/**
+ * 停止指定语音块的动画和音频
+ * @param {string|number} chunkId 语音块的ID
+ */
+function stopChunkAnimation(chunkId) {
+    const chunkState = chunkAnimations.get(chunkId);
+    if (!chunkState) return;
 
-// 修改后的语音动画管理器类 - 完全独立版本
-class SpeechAnimationManager {
-    constructor(vrm, mixer) {
-        this.vrm = vrm;
-        this.mixer = mixer;
-        this.activeActions = new Map();
-        this.speechClip = null;
-        
-        // 预创建语音clip
-        this.createBaseSpeechClip();
+    console.log(`正在停止 Chunk ${chunkId} 的动画和音频`);
+
+    if (chunkState.animationId) {
+        cancelAnimationFrame(chunkState.animationId);
     }
-    
-    createBaseSpeechClip() {
-        this.speechClip = createSpeechClip(this.vrm, []);
+    if (chunkState.audio) {
+        chunkState.audio.pause();
+        chunkState.audio.removeAttribute('src'); // 彻底释放资源
+        chunkState.audio.load();
     }
-    
-    startSpeech(chunkId, expressions = []) {
-        console.log(`Starting speech for chunk ${chunkId}`);
-        
-        // 移除对闲置动画的任何干预
-        // 语音播放时不再通知闲置动画管理器
-        
-        // 停止之前的动画
-        if (this.activeActions.has(chunkId)) {
-            this.stopSpeech(chunkId);
-        }
-        
-        // 创建带表情的clip
-        const clip = createSpeechClip(this.vrm, expressions);
-        if (!clip) return;
-        
-        const action = this.mixer.clipAction(clip);
-        action.setLoop(THREE.LoopOnce);
-        action.clampWhenFinished = true;
-        action.setEffectiveWeight(1.0); // 语音动画保持全权重
-        
-        action.play();
-        
-        // 存储action和开始时间
-        this.activeActions.set(chunkId, {
-            action: action,
-            clip: clip,
-            startTime: Date.now(),
-            expressions: expressions
-        });
-        
-        console.log(`Speech animation started for chunk ${chunkId}`);
+    if (chunkState.audioSource) {
+        chunkState.audioSource.disconnect();
     }
-    
-    stopSpeech(chunkId) {
-        const actionData = this.activeActions.get(chunkId);
-        if (!actionData) return;
-        
-        console.log(`Stopping speech for chunk ${chunkId}`);
-        
-        // 淡出并停止
-        actionData.action.fadeOut(0.1);
-        
-        setTimeout(() => {
-            actionData.action.stop();
-            this.activeActions.delete(chunkId);
-            
-            // 如果没有其他语音在播放，重置表情
-            if (this.activeActions.size === 0) {
-                this.resetExpressions();
-            }
-        }, 100);
-    }
-    
-    stopAllSpeech() {
-        console.log('Stopping all speech animations');
-        
-        for (const chunkId of this.activeActions.keys()) {
-            this.stopSpeech(chunkId);
-        }
-    }
-    
-    resetExpressions() {
-        if (this.vrm && this.vrm.expressionManager) {
-            this.vrm.expressionManager.resetValues();
-            console.log('All speech expressions reset');
-        }
-    }
-    
-    // 检查是否有活跃的语音动画
-    hasActiveSpeech() {
-        return this.activeActions.size > 0;
+
+    chunkAnimations.delete(chunkId);
+
+    // 如果所有语音块都已结束，则重置表情
+    if (chunkAnimations.size === 0 && currentVrm && currentVrm.expressionManager) {
+        console.log('所有语音块播放完毕，重置表情。');
+        currentVrm.expressionManager.resetValues();
     }
 }
 
+/**
+ * 停止所有正在播放的语音动画
+ */
+function stopAllChunkAnimations() {
+    console.log('正在停止所有的口型同步动画。');
+    for (const chunkId of chunkAnimations.keys()) {
+        stopChunkAnimation(chunkId);
+    }
+    chunkAnimations.clear();
+    if (currentVrm && currentVrm.expressionManager) {
+        currentVrm.expressionManager.resetValues();
+    }
+}
+
+/**
+ * 单个语音块的动画循环，用于驱动口型
+ * @param {string|number} chunkId 
+ * @param {object} chunkState 
+ */
+function startChunkAnimation(chunkId, chunkState) {
+    if (!chunkState || !chunkState.isPlaying || !chunkState.analyser) {
+        console.log(`无法为 Chunk ${chunkId} 启动动画`);
+        return;
+    }
+
+    const dataArray = new Uint8Array(chunkState.analyser.frequencyBinCount);
+    let frameCount = 0;
+
+    function animateChunk() {
+        const currentState = chunkAnimations.get(chunkId);
+        if (!currentState || !currentState.isPlaying) {
+            console.log(`因状态改变，停止 Chunk ${chunkId} 的动画`);
+            return;
+        }
+
+        frameCount++;
+
+        // 从分析器获取实时音频频率数据
+        chunkState.analyser.getByteFrequencyData(dataArray);
+
+        // 计算音量强度
+        let sum = 0;
+        // 人声主要集中在低频区域，可以只分析这部分以获得更准确的结果
+        const relevantData = dataArray.slice(0, dataArray.length * 0.5);
+        for (let i = 0; i < relevantData.length; i++) {
+            sum += relevantData[i];
+        }
+        const average = sum / relevantData.length;
+
+        // 应用口型动画
+        if (currentVrm && currentVrm.expressionManager) {
+            let max_mouthOpen = 0.8; // 默认最大张嘴程度
+            const expression = chunkState.expression;
+            
+            // 处理其他表情
+            if (expression) {
+                if (['happy', 'angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
+                    currentVrm.expressionManager.setValue(expression, 1.0);
+                    if (expression === 'happy') max_mouthOpen = 0.2;
+                } else if (expression === 'surprised') {
+                    // 惊讶表情持续2秒 (30fps * 2)
+                    currentVrm.expressionManager.setValue(expression, frameCount < 60 ? 1.0 : 0.0);
+                    if (frameCount < 60) max_mouthOpen = 0.1;
+                } else if (['blink', 'blinkLeft', 'blinkRight'].includes(expression)) {
+                    // 简单的眨眼动画，持续1秒
+                    const progress = (frameCount % 30) / 30;
+                    const blinkValue = Math.sin(progress * Math.PI);
+                    currentVrm.expressionManager.setValue(expression, blinkValue);
+                }
+            }
+
+            // 根据音量驱动口型
+            const intensity = Math.min(average / 40, 1.0); // 40是敏感度系数，可调整
+            if (intensity > 0.05) { // 阈值，防止背景噪音导致嘴动
+                const mouthOpen = Math.min(intensity * 1.5, max_mouthOpen);
+                currentVrm.expressionManager.setValue('aa', mouthOpen);
+                // 添加一些'ih'口型作为变化
+                const variation = Math.sin(frameCount * 0.2) * 0.1;
+                currentVrm.expressionManager.setValue('ih', Math.min(Math.max(0, mouthOpen * 0.5 + variation), max_mouthOpen));
+            } else {
+                // 平滑地闭上嘴巴
+                const currentAA = currentVrm.expressionManager.getValue('aa') || 0;
+                const currentIH = currentVrm.expressionManager.getValue('ih') || 0;
+                currentVrm.expressionManager.setValue('aa', Math.max(0, currentAA * 0.8 - 0.05));
+                currentVrm.expressionManager.setValue('ih', Math.max(0, currentIH * 0.7 - 0.03));
+            }
+        }
+
+        currentState.animationId = requestAnimationFrame(animateChunk);
+    }
+
+    console.log(`为 Chunk ${chunkId} 启动动画循环`);
+    chunkState.animationId = requestAnimationFrame(animateChunk);
+}
+
+/**
+ * 为单个语音块启动基于音频分析的口型同步
+ * @param {object} data 包含音频和表情信息的数据对象
+ */
+async function startLipSyncForChunk(data) {
+    const chunkId = data.chunkIndex;
+
+    if (chunkAnimations.has(chunkId)) {
+        stopChunkAnimation(chunkId);
+    }
+
+    if (!currentVrm || !currentVrm.expressionManager) {
+        console.error('VRM 或表情管理器尚未准备好');
+        return;
+    }
+    
+    // 后端必须提供 Base64 编码的音频数据
+    if (!data.audioDataUrl) {
+        console.error(`Chunk ${chunkId} 缺少 'audioDataUrl'`);
+        return;
+    }
+
+    try {
+        const chunkState = {
+            isPlaying: true,
+            animationId: null,
+            audio: null,
+            audioSource: null,
+            analyser: null,
+            expression: null,
+        };
+        chunkAnimations.set(chunkId, chunkState);
+
+        // 初始化 Web Audio API 上下文
+        if (!currentAudioContext) {
+            currentAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // 激活 AudioContext
+        if (currentAudioContext.state === 'suspended') {
+            await currentAudioContext.resume();
+        }
+
+        // 处理表情
+        const expressions = data.expressions || [];
+        if (expressions.length > 0) {
+            chunkState.expression = expressions[0].replace(/<|>/g, '');
+        }
+
+        // 创建音频元素
+        const audio = new Audio();
+        audio.crossOrigin = 'anonymous';
+        audio.src = data.audioDataUrl;
+        audio.volume = 0.01; // 静音播放，我们只关心数据
+        chunkState.audio = audio;
+
+        await new Promise((resolve, reject) => {
+            audio.addEventListener('canplaythrough', resolve, { once: true });
+            audio.addEventListener('error', reject, { once: true });
+            audio.load();
+        });
+
+        if (!chunkAnimations.has(chunkId)) {
+            return; // 在加载时被取消
+        }
+
+        // 创建分析器节点 (Web Audio API)
+        const analyser = currentAudioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.3;
+        chunkState.analyser = analyser;
+
+        // 创建媒体源节点并连接 (Web Audio API)
+        const audioSource = currentAudioContext.createMediaElementSource(audio);
+        audioSource.connect(analyser);
+        analyser.connect(currentAudioContext.destination); // 必须连接到输出才能处理
+        chunkState.audioSource = audioSource;
+
+        await audio.play();
+
+        startChunkAnimation(chunkId, chunkState);
+
+        audio.addEventListener('ended', () => {
+            console.log(`Chunk ${chunkId} 音频结束`);
+            stopChunkAnimation(chunkId);
+        }, { once: true });
+
+    } catch (error) {
+        console.error(`为 Chunk ${chunkId} 启动口型同步时出错:`, error);
+        stopChunkAnimation(chunkId);
+    }
+}
 
 let VRMname = await getVRMname();
 showModelSwitchingIndicator(VRMname);
@@ -1509,9 +1505,6 @@ loader.load(
         blinkAction = currentMixer.clipAction(blinkClip);
         blinkAction.setLoop(THREE.LoopRepeat);
         blinkAction.play();
-
-        // 创建语音动画管理器
-        speechAnimationManager = new SpeechAnimationManager(vrm, currentMixer);
 
         // 创建闲置动画管理器
         idleAnimationManager = new IdleAnimationManager(vrm, currentMixer);
@@ -2137,7 +2130,8 @@ if (isElectron) {
 // 在全局变量区域添加
 let ttsWebSocket = null;
 let wsConnected = false;
-let currentAudioContext = null;
+let currentAudioContext = null; // 用于管理音频处理
+const chunkAnimations = new Map(); // 用于存储每个语音块的动画状态
 
 // 初始化 WebSocket 连接
 function initTTSWebSocket() {
@@ -2195,73 +2189,46 @@ function sendToMain(type, data) {
 // 修改 handleTTSMessage 函数
 function handleTTSMessage(message) {
     const { type, data } = message;
-    
+
     switch (type) {
         case 'ttsStarted':
-            console.log('TTS started, preparing for speech animation');
-            if (speechAnimationManager) {
-                speechAnimationManager.stopAllSpeech();
-            }
+            console.log('TTS 流程开始');
+            stopAllChunkAnimations(); // 停止所有之前的口型动画
             clearSubtitle();
             break;
-            
+
         case 'startSpeaking':
-            console.log('Starting speech animation for chunk:', data.chunkIndex);
+            console.log('收到播放指令, Chunk:', data.chunkIndex);
+            // 调用新的口型同步函数
+            startLipSyncForChunk(data); 
             if (data.text) {
                 updateSubtitle(data.text, data.chunkIndex);
             }
-            startLipSyncForChunk(data);
             break;
-            
+
         case 'chunkEnded':
-            console.log('Chunk ended:', data.chunkIndex);
-            if (speechAnimationManager) {
-                speechAnimationManager.stopSpeech(data.chunkIndex);
-            }
-            // 如果当前显示的是这个chunk的字幕，则清除
+            // 注意：现在音频播放结束时会自动停止，所以这个消息的处理可以简化
+            console.log('后端通知 Chunk 结束:', data.chunkIndex);
+            // 如果字幕仍然显示的是这个 chunk 的，就清除它
             if (currentSubtitleChunkIndex === data.chunkIndex) {
                 clearSubtitle();
             }
             break;
-            
+
         case 'stopSpeaking':
-            console.log('Stopping speech animation');
-            if (speechAnimationManager) {
-                speechAnimationManager.stopAllSpeech();
-            }
+            console.log('收到停止指令');
+            stopAllChunkAnimations();
+            clearSubtitle();
             break;
-            
+
         case 'allChunksCompleted':
-            console.log('All TTS chunks completed');
-            if (speechAnimationManager) {
-                speechAnimationManager.stopAllSpeech();
-            }
+            console.log('所有 TTS 语音块处理完成');
+            // stopAllChunkAnimations 会在最后一个 chunk 结束时自动调用并重置表情
+            // 这里可以确保万无一失
+            stopAllChunkAnimations();
             clearSubtitle();
             sendToMain('animationComplete', { status: 'completed' });
             break;
-    }
-}
-
-// 修改 startLipSyncForChunk 函数
-async function startLipSyncForChunk(data) {
-    const chunkId = data.chunkIndex;
-    
-    if (!speechAnimationManager) {
-        console.error('Speech animation manager not available');
-        return;
-    }
-    
-    try {
-        // 使用新的管理器开始语音动画
-        speechAnimationManager.startSpeech(chunkId, data.expressions || []);
-        
-        // 字幕处理
-        if (data.text) {
-            updateSubtitle(data.text, data.chunkIndex);
-        }
-        
-    } catch (error) {
-        console.error(`Error starting lip sync for chunk ${chunkId}:`, error);
     }
 }
 
@@ -2429,19 +2396,12 @@ async function switchToModel(index) {
             idleAnimationManager.stopAllAnimations();
         }
         
-        // 🔥 添加：停止当前的语音动画
-        if (speechAnimationManager) {
-            speechAnimationManager.stopAllSpeech();
-        }
-        
         // 移除当前VRM模型
         if (currentVrm) {
             scene.remove(currentVrm.scene);
             currentVrm = undefined;
         }
         
-        // 重置语音动画管理器
-        speechAnimationManager = null;
         // 🔥 添加：重置闲置动画管理器
         idleAnimationManager = null;
 
@@ -2493,9 +2453,6 @@ async function switchToModel(index) {
                 blinkAction = currentMixer.clipAction(blinkClip);
                 blinkAction.setLoop(THREE.LoopRepeat);
                 blinkAction.play();
-
-                // 创建语音动画管理器
-                speechAnimationManager = new SpeechAnimationManager(vrm, currentMixer);
                 
                 // 🔥 关键修复：重新创建闲置动画管理器并重新设置动画队列
                 idleAnimationManager = new IdleAnimationManager(vrm, currentMixer);
