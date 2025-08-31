@@ -67,17 +67,17 @@
 
 ## Quick Start
 
-### Windows integration package (installation-free source version)(Recommended, no need to redownload for subsequent updates)
-
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.7-beta.zip)
-
-⭐Attention! You can double-click `一键更新(update).bat` to update the software, or you can double-click `一键启动(start).bat` to start the software.
-
 ### Windows Desktop Installation
 
   👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.6.exe)
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
+
+### Windows integration package (installation-free source version)
+
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.7-beta.zip)
+
+⭐Attention! You can double-click `一键更新(update).bat` to update the software, or you can double-click `一键启动(start).bat` to start the software.
 
 ### MacOS Desktop Installation
 

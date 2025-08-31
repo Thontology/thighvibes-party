@@ -67,17 +67,17 @@
 
 ## 快速开始
 
-### windows整合包（免安装源码版本）（推荐，后续更新无需重新下载）
-
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.7-beta.zip)
-
-⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
-
 ### windows桌面版安装
 
   👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.6.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
+
+### windows整合包（免安装源码版本）
+
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.7-beta.zip)
+
+⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
 
 ### MacOS桌面版安装
 
