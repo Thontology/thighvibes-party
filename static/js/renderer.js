@@ -25,7 +25,9 @@ const app = Vue.createApp({
   },
   async mounted() {
     this.checkMobile();
-    this.checkServerPort();
+    if (isElectron) {
+      this.checkServerPort();
+    }
     window.addEventListener('keydown', this.handleKeyDown)
     window.addEventListener('keyup', this.handleKeyUp)
     window.addEventListener('resize', this.checkMobile);

@@ -75,7 +75,7 @@ let vue_data = {
     isExpanded: true,
     isElectron: isElectron,
     isCollapse: true,
-    isBtnCollapse: false,
+    isBtnCollapse: true,
     activeMenu: 'home',
     isMaximized: false,
     hasUpdate: false,
@@ -240,7 +240,7 @@ let vue_data = {
   }
 }`
     },
-    activeKbTab: 'add', // 默认激活的标签页
+    activeKbTab: 'settings', // 默认激活的标签页
     webSearchSettings: {
       enabled: false,
       engine: 'duckduckgo',
@@ -417,7 +417,7 @@ let vue_data = {
       separators:["。", "\n", "？", "！", "，","～","!","?",",","~"],
       maxConcurrency: 2,
       enabledInterruption: false,
-      bufferWordList: ["嗯。","这个嘛~","我想想！","好的。"],
+      bufferWordList: [],
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',
       edgettsVoice: 'XiaoyiNeural',
@@ -435,7 +435,10 @@ let vue_data = {
       base_url: "",
       api_key: "",
       openaiVoice:"alloy",
-      openaiSpeed: 1.0
+      openaiSpeed: 1.0,
+      customTTSserver: "http://127.0.0.1:9880",
+      customTTSspeaker: "",
+      customTTSspeed: 1.0,
     },
     openaiVoices:['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
     showVrmModelDialog: false,
@@ -476,6 +479,8 @@ let vue_data = {
       path: '',
       text: '',
     },
+    startTime: null,
+    elapsedTime: 0,
     gsvTextLangs:["zh", "en" , "yue","ja","ko","auto","auto_yue"],
     audioPlayQueue: [],
     currentAudio: null,
@@ -962,7 +967,7 @@ let vue_data = {
     isStarting: false,      // 启动中状态
     isStopping: false,      // 停止中状态
     isReloading: false,     // 重载中状态
-    activeMemoryTab: 'add',
+    activeMemoryTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     memories: [],
     newMemory: {

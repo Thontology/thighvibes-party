@@ -188,7 +188,7 @@
       "separators":["。", "\n", "？", "！", "，","～","!","?",",","~"],
       "maxConcurrency": 2,
       "enabledInterruption": false,
-      "bufferWordList": ["嗯。","这个嘛~","我想想！","好的。"],
+      "bufferWordList": [],
       "edgettsLanguage": "zh-CN",
       "edgettsGender": "Female",
       "edgettsVoice": "XiaoyiNeural",
@@ -206,7 +206,10 @@
       "base_url": "",
       "api_key": "",
       "openaiVoice":"alloy",
-      "openaiSpeed": 1.0
+      "openaiSpeed": 1.0,
+      "customTTSserver": "http://127.0.0.1:9880",
+      "customTTSspeaker": "",
+      "customTTSSpeed": 1.0
     },
     "liveConfig": {
       "onlyDanmaku": true,
@@ -259,6 +262,6 @@
     "workflows": [],
     "stickerPacks": [],
     "currentLanguage": "zh-CN",
-    "isBtnCollapse": false,
+    "isBtnCollapse": true,
     "is_sandbox": false
 }

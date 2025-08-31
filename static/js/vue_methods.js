@@ -1046,10 +1046,10 @@ let vue_methods = {
           this.changeMemory();
           // this.target_lang改成navigator.language || navigator.userLanguage;
           this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
-          await this.loadDefaultModels();
-          await this.loadDefaultMotions();
+          this.loadDefaultModels();
+          this.loadDefaultMotions();
           if (this.asrSettings.enabled) {
-            await this.startASR();
+            this.startASR();
           }
         } 
         else if (data.type === 'settings_saved') {
@@ -1137,6 +1137,8 @@ let vue_methods = {
     async sendMessage() { 
       if (!this.userInput.trim() || this.isTyping) return;
       this.isTyping = true;
+      // 开始计时
+      this.startTimer();
       if (this.ttsSettings.enabledInterruption) {
         // 关闭正在播放的音频
         if (this.currentAudio){
@@ -1183,7 +1185,6 @@ let vue_methods = {
                 fileLinks = data.fileLinks;
                 // data.textFiles 添加到 this.textFiles
                 this.textFiles = [...this.textFiles, ...data.textFiles];
-                await this.autoSaveSettings();
             } else {
                 showNotification(this.t('file_upload_failed'), 'error');
             }
@@ -1224,7 +1225,6 @@ let vue_methods = {
                 imageLinks = data.fileLinks;
                 // data.imageFiles 添加到 this.imageFiles
                 this.imageFiles = [...this.imageFiles, ...data.imageFiles];
-                await this.autoSaveSettings();
               } else {
                 showNotification(this.t('file_upload_failed'), 'error');
               }
@@ -1348,7 +1348,7 @@ let vue_methods = {
           conv.system_prompt = this.system_prompt;
         }
       }
-      await this.autoSaveSettings();
+      this.autoSaveSettings();
       try {
         console.log('Sending message...');
         // 请求参数需要与后端接口一致
@@ -1388,8 +1388,8 @@ let vue_methods = {
         });
         if (this.ttsSettings.enabled) {
           // 启动TTS和音频播放进程
-          const ttsProcess = this.startTTSProcess();
-          const audioProcess = this.startAudioPlayProcess();
+          this.startTTSProcess();
+          this.startAudioPlayProcess();
         }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -1416,10 +1416,27 @@ let vue_methods = {
               
               try {
                 const parsed = JSON.parse(jsonStr);
-                
+                const lastMessage = this.messages[this.messages.length - 1];
+                if (lastMessage.content == '') {
+                  // 结束计时并打印时间
+                  this.stopTimer();
+                  console.log(`first token processed in ${this.elapsedTime}ms`);
+                }
+                if (parsed.choices?.[0]?.delta?.content) {
+                  tts_buffer += parsed.choices[0].delta.content;
+                  // 处理 TTS 分割
+                  if (this.ttsSettings.enabled) {
+                    const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
+                    // 将完整的句子添加到 ttsChunks
+                    if (chunks.length > 0) {
+                      lastMessage.ttsChunks.push(...chunks);
+                    }
+                    // 更新 tts_buffer 为剩余部分
+                    tts_buffer = remaining;
+                  }
+                }
                 // 处理 reasoning_content 逻辑
                 if (parsed.choices?.[0]?.delta?.reasoning_content || parsed.choices?.[0]?.delta?.tool_content) {
-                  const lastMessage = this.messages[this.messages.length - 1];
                   let newContent = '';
                   if (parsed.choices?.[0]?.delta?.reasoning_content) {
                     newContent = parsed.choices[0].delta.reasoning_content;
@@ -1454,17 +1471,6 @@ let vue_methods = {
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
                   lastMessage.pure_content += parsed.choices[0].delta.content;
-                  tts_buffer += parsed.choices[0].delta.content;
-                  // 处理 TTS 分割
-                  if (this.ttsSettings.enabled) {
-                    const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
-                    // 将完整的句子添加到 ttsChunks
-                    if (chunks.length > 0) {
-                      lastMessage.ttsChunks.push(...chunks);
-                    }
-                    // 更新 tts_buffer 为剩余部分
-                    tts_buffer = remaining;
-                  }
                   this.scrollToBottom();
                 }
                 if (parsed.choices?.[0]?.delta?.async_tool_id) {
@@ -1539,13 +1545,14 @@ let vue_methods = {
         this.isSending = false;
         this.isTyping = false;
         this.abortController = null;
-        await this.autoSaveSettings();
+        this.autoSaveSettings();
       }
     },
     async translateMessage(index) {
         const msg = this.messages[index];
         const originalContent = msg.content;
-
+        if (msg.isTranslating) return;
+        if (originalContent.trim() === '') return;
         // 直接修改原消息状态
         this.messages[index] = {
             ...msg,
@@ -1636,7 +1643,6 @@ let vue_methods = {
             }
         } finally {
             this.abortController = null;
-            this.isTyping = false;
         }
     },
     stopGenerate() {
@@ -1727,11 +1733,11 @@ let vue_methods = {
             reject(new Error('保存失败'));
           }
         };
-        // 设置 5 秒超时
+        // 设置 10 秒超时
         const timeout = setTimeout(() => {
           this.ws.removeEventListener('message', handler);
           reject(new Error('保存超时'));
-        }, 5000);
+        }, 10000);
         this.ws.addEventListener('message', handler);
       });
     },
@@ -1808,7 +1814,7 @@ let vue_methods = {
       this.asyncToolsID = [];
       this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
-      await this.autoSaveSettings();
+      this.autoSaveSettings();
     },
     async sendFiles() {
       this.showUploadDialog = true;
@@ -2990,6 +2996,7 @@ let vue_methods = {
       this.newMemory.alternateGreetings.push('');
     },
     async addMemory() {
+      this.selectMemoryProvider(this.newMemory.providerId);
       /* 把新字段组装成一个“记忆”对象 */
       const build = () => ({
         id: this.newMemory.id || uuid.v4(),
@@ -4338,6 +4345,10 @@ let vue_methods = {
 
     // 修改：初始化VAD（Web Speech模式也使用VAD）
     async initVAD() {
+      let min_probabilities = 0.2;
+      if (this.asrSettings.engine === 'webSpeech') {
+        min_probabilities = 0.7;
+      }
       // 初始化VAD
       this.vad = await vad.MicVAD.new({
         preSpeechPadFrames: 10,
@@ -4347,7 +4358,7 @@ let vue_methods = {
         },
         onFrameProcessed: (probabilities, frame) => {
           // 处理每一帧
-          if (probabilities["isSpeech"] > 0.2) {
+          if (probabilities["isSpeech"] > min_probabilities) {
             if (this.ttsSettings.enabledInterruption) {
               // 关闭正在播放的音频
               if (this.currentAudio) {
@@ -4604,17 +4615,13 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     splitTTSBuffer(buffer) {
-      // 移除buffer中的emoji
-      buffer = buffer.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
-      // 移除常见的markdown符号，例如：**  --- 
-      buffer = buffer.replace(/[*_~`]/g, '');
-      // 移除常见的markdown符号，例如以 - 开头的行
-      buffer = buffer.replace(/^\s*- /gm, '');
-      // 匹配markdown中的链接,[]()，并替换为空字符串
-      buffer = buffer.replace(/!\[.*?\]\(.*?\)/g, '');
-      buffer = buffer.replace(/\[.*?\]\(.*?\)/g, '');
-      // HTML标签替换为空字符串
-      buffer = buffer.replace(/<[^>]*>/g, '');
+      // 1. 一次性清理：emoji + markdown/HTML（只扫一次）
+      buffer = buffer
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')  // emoji
+        .replace(/[*_~`]/g, '')                          // 行内 markdown
+        .replace(/^\s*-\s/gm, '')                       // 列表
+        .replace(/!\[.*?\]\(.*?\)/g, '')                // 图片
+        .replace(/\[.*?\]\(.*?\)/g, '')                 // 链接
 
       if (!buffer || buffer.trim() === '') {
         return { chunks: [], remaining: buffer };
@@ -4703,33 +4710,36 @@ let vue_methods = {
       
       let max_concurrency = 1;
       let nextIndex = 0;
-
       while (this.TTSrunning) {
-        max_concurrency = this.ttsSettings.maxConcurrency || 1; // 最大并发数
         if (nextIndex == 0){
           let remainingText = lastMessage.ttsChunks?.[0] || '';
+          if (remainingText && this.ttsSettings.bufferWordList.length > 0){
+            for (const exp of this.expressionMap) {
+              const regex = new RegExp(exp, 'g');
+              if (remainingText.includes(exp)) {
+                remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+              }
+            }
+            // 移除HTML标签
+            remainingText = remainingText.replace(/<[^>]+>/g, '');
+            // 检查remainingText是否包含中文字符
+            const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
 
-          for (const exp of this.expressionMap) {
-            const regex = new RegExp(exp, 'g');
-            if (remainingText.includes(exp)) {
-              remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+            if ((hasChinese && remainingText?.length > 5) || 
+                (!hasChinese && remainingText?.length > 10)) {
+                // 在lastMessage.ttsChunks开头第一个元素前插入内容
+                if (this.ttsSettings.bufferWordList.length > 0) {
+                    // 随机选择this.ttsSettings.bufferWordList中的一个单词
+                    const bufferWord = this.ttsSettings.bufferWordList[
+                        Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
+                    ];
+                    lastMessage.ttsChunks.unshift(bufferWord);
+                }
             }
           }
-          // 检查remainingText是否包含中文字符
-          const hasChinese = /[\u4e00-\u9fa5]/.test(remainingText);
-
-          if ((hasChinese && remainingText?.length > 5) || 
-              (!hasChinese && remainingText?.length > 10)) {
-              // 在lastMessage.ttsChunks开头第一个元素前插入内容
-              if (this.ttsSettings.bufferWordList.length > 0) {
-                  // 随机选择this.ttsSettings.bufferWordList中的一个单词
-                  const bufferWord = this.ttsSettings.bufferWordList[
-                      Math.floor(Math.random() * this.ttsSettings.bufferWordList.length)
-                  ];
-                  lastMessage.ttsChunks.unshift(bufferWord);
-              }
-          }
         }
+
+        max_concurrency = this.ttsSettings.maxConcurrency || 1; // 最大并发数
         while (lastMessage.ttsQueue.size < max_concurrency && 
               nextIndex < lastMessage.ttsChunks.length) {
           if (!this.TTSrunning) break;
@@ -4739,45 +4749,56 @@ let vue_methods = {
           this.processTTSChunk(lastMessage, index).finally(() => {
             lastMessage.ttsQueue.delete(index);
           });
+          if (index == 0){
+            // 结束计时并打印时间
+            this.stopTimer();
+            console.log(`TTS chunk 0 start in ${this.elapsedTime}ms`);
+            // 延迟0.8秒，让TTS首包更快
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
         }
         
         await new Promise(resolve => setTimeout(resolve, 10));
       }
       console.log('TTS queue processing completed');
     },
-
+    startTimer() {
+      this.startTime = Date.now();
+    },
+    stopTimer() {
+      this.elapsedTime = Date.now() - this.startTime;
+    },
     async processTTSChunk(message, index) {
       const chunk = message.ttsChunks[index];
       const exps = [];
       let remainingText = chunk;
-
-      for (const exp of this.expressionMap) {
-        const regex = new RegExp(exp, 'g');
-        if (remainingText.includes(exp)) {
-          exps.push(exp);
-          remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+      let chunk_text = remainingText;
+      let chunk_expressions = exps;
+      if (chunk.indexOf('<') !== -1){
+        // 包含表情
+        for (const exp of this.expressionMap) {
+          const regex = new RegExp(exp, 'g');
+          if (remainingText.includes(exp)) {
+            exps.push(exp);
+            remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
+          }
         }
+        chunk_text = remainingText;
+        chunk_expressions = exps;
       }
-      const chunk_text = remainingText;
-      const chunk_expressions = exps;
       console.log(`Processing TTS chunk ${index}:`, chunk_text);
       
       try {
         const response = await fetch(`/tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: chunk_text, index })
+          body: JSON.stringify({ ttsSettings: this.ttsSettings,text: chunk_text, index })
         });
 
         if (response.ok) {
           const audioBlob = await response.blob();
           
-          // 转换为 Base64
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-          const audioDataUrl = `data:${audioBlob.type};base64,${base64}`;
-          
-          // 本地播放仍使用 blob URL
+          // 本地播放 blob URL
           const audioUrl = URL.createObjectURL(audioBlob);
           
           message.audioChunks[index] = { 
@@ -4786,6 +4807,19 @@ let vue_methods = {
             text: chunk_text,
             index 
           };
+          if (index == 0){
+            // 结束计时并打印时间
+            this.stopTimer();
+            console.log(`TTS chunk ${index} processed in ${this.elapsedTime}ms`);
+          }
+          // 转换为 Base64
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result.split(',')[1]); // 去掉 data:*
+            reader.onerror = reject;
+            reader.readAsDataURL(audioBlob);
+          });
+          const audioDataUrl = `data:${audioBlob.type};base64,${base64}`;
           this.cur_audioDatas[index]= audioDataUrl;
           console.log(`TTS chunk ${index} processed`);
           this.checkAudioPlayback();
@@ -5021,9 +5055,28 @@ let vue_methods = {
   
   // 上传参考音频
   async uploadGsvAudio() {
-    if (!this.newGsvAudio.file) {
+    if (!this.newGsvAudio.file && !this.newGsvAudio.path) {
       showNotification('请先选择音频文件', 'error');
       return;
+    }
+    if (!this.newGsvAudio.file) {
+        // 添加新音频到选项列表
+        const newAudioOption = {
+          path: this.newGsvAudio.path,
+          name: this.newGsvAudio.name,
+          text: this.newGsvAudio.text
+        };
+        
+        this.ttsSettings.gsvAudioOptions.push(newAudioOption);
+        
+        // 关闭对话框并重置状态
+        this.cancelGsvAudioUpload();
+        
+        // 自动保存设置
+        await this.autoSaveSettings();
+        
+        showNotification('参考音频上传成功');
+        return;
     }
     
     const formData = new FormData();
@@ -5088,7 +5141,12 @@ let vue_methods = {
       );
       
       if (audioIndex === -1) return;
-      
+      if (this.ttsSettings.gsvAudioOptions[audioIndex].path == this.ttsSettings.gsvAudioOptions[audioIndex].name){
+        // 为路径上传的音频，直接从选项中移除
+        this.ttsSettings.gsvAudioOptions.splice(audioIndex, 1);
+        showNotification('音频已删除');
+        return;
+      }
       // 获取文件名用于后端删除
       const uniqueFilename = this.ttsSettings.gsvAudioOptions[audioIndex].path
         .split('/')
@@ -5194,7 +5252,7 @@ let vue_methods = {
     },
     
     // 发送 TTS 状态到 VRM
-    sendTTSStatusToVRM(type, data) {
+    async sendTTSStatusToVRM(type, data) {
       if (this.ttsWebSocket && this.wsConnected) {
         this.ttsWebSocket.send(JSON.stringify({
           type,
@@ -5564,6 +5622,7 @@ let vue_methods = {
   async processDanmuQueue() {
     try {
       console.log(this.danmu);
+      const lastMessage = this.messages[this.messages.length - 1];
       if(this.TTSrunning && this.ttsSettings.enabled){
         if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
           console.log('All audio chunks played');
@@ -6050,5 +6109,44 @@ let vue_methods = {
     }
     
     return motion;
+  },
+
+  async confirmClearAll() {
+    try {
+      await this.$confirm(this.t('confirmClearAllHistory'), this.t('warning'), {
+        confirmButtonText: this.t('confirm'),
+        cancelButtonText: this.t('cancel'),
+        type: 'warning'
+      });
+      
+      this.conversations = [];
+      await this.autoSaveSettings();
+    } catch (error) {
+      // 用户取消操作
+    }
+  },
+
+  async keepLastWeek() {
+    try {
+      await this.$confirm(this.t('confirmKeepLastWeek'), this.t('warning'), {
+        confirmButtonText: this.t('confirm'),
+        cancelButtonText: this.t('cancel'),
+        type: 'warning'
+      });
+
+      const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      this.conversations = this.conversations.filter(conv => 
+        conv.timestamp && conv.timestamp >= oneWeekAgo
+      );
+      
+      await this.autoSaveSettings();
+    } catch (error) {
+      // 用户取消操作
+    }
+  },
+  changeGsvAudioPath() {
+    if (this.newGsvAudio.path) {
+      this.newGsvAudio.name = this.newGsvAudio.path;
+    }
   },
 }

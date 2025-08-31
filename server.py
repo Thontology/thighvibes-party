@@ -4,11 +4,11 @@ import glob
 from io import BytesIO
 import os
 from pathlib import Path
+import random
 import socket
 import sys
 import tempfile
 import threading
-import wave
 import aiohttp
 import httpx
 from scipy.io import wavfile
@@ -24,11 +24,8 @@ import asyncio
 import copy
 from functools import partial
 import json
-import random
 import re
 import shutil
-import signal
-from urllib.parse import urlparse
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, WebSocket, Request, WebSocketDisconnect
 from fastapi_mcp import FastApiMCP
 import logging
@@ -43,8 +40,7 @@ import time
 from typing import Any, List, Dict,Optional
 import shortuuid
 from py.mcp_clients import McpClient
-from contextlib import asynccontextmanager,suppress
-import requests
+from contextlib import asynccontextmanager
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
@@ -4051,13 +4047,12 @@ async def get_tts_status():
 @app.post("/tts")
 async def text_to_speech(request: Request):
     try:
-        settings = await load_settings()
         data = await request.json()
         text = data['text']
         if text == "":
             return JSONResponse(status_code=400, content={"error": "Text is empty"})
+        tts_settings = data['ttsSettings']
         index = data['index']
-        tts_settings = settings.get('ttsSettings', {})
         tts_engine = tts_settings.get('engine', 'edgetts')
         
         if tts_engine == 'edgetts':
@@ -4092,19 +4087,52 @@ async def text_to_speech(request: Request):
                     "X-Audio-Index": str(index)
                 }
             )
+        elif tts_engine == 'customTTS':
+            # 构造 GET 请求参数
+            params = {
+                "text": text,
+                "speaker": tts_settings.get('customTTSspeaker', ''),
+                "speed":tts_settings.get('customTTSspeed', 1.0)
+            }
+            # 按行分割
+            custom_tts_servers_list = tts_settings.get('customTTSserver', 'http://127.0.0.1:9880').split('\n')
+            if len(custom_tts_servers_list) == 1:
+                custom_tt_server = custom_tts_servers_list[0]
+            else:
+                # 移除空行
+                custom_tts_servers_list = [server for server in custom_tts_servers_list if server.strip()]
+                # 根据index选择服务器
+                custom_tt_server = custom_tts_servers_list[index % len(custom_tts_servers_list)]
+            async def generate_audio():
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    try:
+                        # 发起流式 GET 请求到本地 Custom TTS 服务
+                        async with client.stream(
+                            "GET",
+                            custom_tt_server,
+                            params=params
+                        ) as response:
+                            response.raise_for_status()
+                            async for chunk in response.aiter_bytes():
+                                yield chunk
+                    except httpx.RequestError as e:
+                        print(f"Custom TTS 请求失败: {e}")
+                        raise HTTPException(status_code=502, detail=f"Custom TTS 连接失败: {str(e)}")
+
+            return StreamingResponse(
+                generate_audio(),
+                media_type="audio/wav",
+                headers={
+                    "Content-Disposition": f"inline; filename=tts_{index}.wav",
+                    "X-Audio-Index": str(index)
+                }
+            )
         # GSV处理逻辑
         elif tts_engine == 'GSV':
-            # 从设置获取所有参数并提供默认值
-            gsv_config = {
-                'server': tts_settings.get('gsvServer', 'http://127.0.0.1:9880'),
-                'text_lang': tts_settings.get('gsvTextLang', 'zh'),
-                'speed': tts_settings.get('gsvRate', 1.0),
-                'prompt_lang': tts_settings.get('gsvPromptLang', 'zh'),
-                'prompt_text': tts_settings.get('gsvPromptText', ''),
-                'ref_audio': tts_settings.get('gsvRefAudioPath', '')
-            }
-            audio_path = os.path.join(UPLOAD_FILES_DIR, gsv_config['ref_audio'])
-            print(f"GSV参数: {gsv_config},音频地址:{audio_path}")
+            audio_path = os.path.join(UPLOAD_FILES_DIR, tts_settings.get('gsvRefAudioPath', ''))
+            if not os.path.exists(audio_path):
+                # 如果音频文件不存在，则认为是相对路径
+                audio_path = tts_settings.get('gsvRefAudioPath', '')
             # 动态样本步数设置
             sample_steps = 4
             if index == 1:
@@ -4115,31 +4143,33 @@ async def text_to_speech(request: Request):
             # 构建核心请求参数
             gsv_params = {
                 "text": text,
-                "text_lang": gsv_config['text_lang'],
+                "text_lang": tts_settings.get('gsvTextLang', 'zh'),
                 "ref_audio_path": audio_path,
-                "prompt_lang": gsv_config['prompt_lang'],
-                "prompt_text": gsv_config['prompt_text'],
-                "speed_factor": gsv_config['speed'],
+                "prompt_lang": tts_settings.get('gsvPromptLang', 'zh'),
+                "prompt_text": tts_settings.get('gsvPromptText', ''),
+                "speed_factor": tts_settings.get('gsvRate', 1.0),
                 "sample_steps": sample_steps,
                 "streaming_mode": True,
-                "text_split_method": "cut5",
+                "text_split_method": "cut0",
                 "media_type": "ogg",
-                "batch_size": 1
+                "batch_size": 20,
+                "seed": 42,
             }
-            
-            # 添加可选参数
-            optional_params = ["top_k", "top_p", "temperature", "batch_threshold", 
-                              "split_bucket", "seed", "parallel_infer", "repetition_penalty"]
-            for param in optional_params:
-                if param in data:
-                    gsv_params[param] = data[param]
-
+            # 按行分割
+            gsvServer_list = tts_settings.get('gsvServer', 'http://127.0.0.1:9880').split('\n')
+            if len(gsvServer_list) == 1:
+                gsvServer = gsvServer_list[0]
+            else:
+                # 移除空行
+                gsvServer_list = [server for server in gsvServer_list if server.strip()]
+                # 根据index选择服务器
+                gsvServer = gsvServer_list[index % len(gsvServer_list)]
             async def generate_audio():
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     try:
                         async with client.stream(
                             "POST",
-                            f"{gsv_config['server']}/tts",
+                            f"{gsvServer}/tts",
                             json=gsv_params
                         ) as response:
                             response.raise_for_status()

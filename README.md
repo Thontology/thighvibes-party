@@ -58,6 +58,13 @@
 ### ComfyUI Integration: Converts ComfyUI workflows into agent tools with load balancing across multiple ComfyUI servers.
 ![image](doc/image/comfyui8.jpeg)
 
+## Hardware requirements
+
+- CPU: 2 cores or more
+- Memory: 2GB or more
+
+**Because all models are optional, you can access the local deployment engine, or you can all use the Cloud as a Service provider interface, so there are few hardware requirements. Test the docker version on the 2-core 2G Cloud as a Service server and it will work fine**
+
 ## Quick Start
 
 ### Windows Desktop Installation
