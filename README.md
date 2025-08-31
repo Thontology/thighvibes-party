@@ -75,7 +75,7 @@
 
 ### Windows integration package (installation-free source version)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.6.zip)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/super-agent-party-v0.2.7-beta.zip)
 
 ### MacOS Desktop Installation (beta test)
 
