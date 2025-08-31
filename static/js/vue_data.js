@@ -828,11 +828,11 @@ let vue_data = {
       { id: 'sticker', title: 'sticker/image', icon: 'fa-solid fa-face-smile'},
       { id: 'HA', title: 'homeAssistant', icon: 'fa-solid fa-house'},
       { id: 'chromeMCP', title: 'browserControl', icon: 'fa-brands fa-chrome' },
+      { id: 'comfyui', title: 'ComfyUI', icon: 'fa-solid fa-palette'},
       { id: 'mcp', title: 'mcpServers', icon: 'fa-solid fa-server'},
       { id: 'a2a', title: 'a2aServers', icon: 'fa-solid fa-plug'},
       { id: 'llmTool', title: 'llmTools', icon: 'fa-solid fa-network-wired'},
       { id: 'customHttpTool', title: 'customHttpTool', icon: 'fa-solid fa-wifi'},
-      { id: 'comfyui', title: 'ComfyUI', icon: 'fa-solid fa-palette'},
     ],
     apiTiles: [
       { id: 'openai', title: 'openaiStyleAPI', icon: 'fa-solid fa-link' },

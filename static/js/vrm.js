@@ -126,8 +126,28 @@ const scene = new THREE.Scene();
 
 // light
 const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
-light.position.set( 1.0, 1.0, 1.0 ).normalize();
+light.position.set( 1, 3, 2 ).normalize();
+light.castShadow = true;                       // 关键
+light.shadow.mapSize.set( 2048, 2048 );        // 精度
+
+// 让阴影相机覆盖角色附近区域（根据你的场景大小调）
+const camSize = 4;
+light.shadow.camera.left   = -camSize;
+light.shadow.camera.right  =  camSize;
+light.shadow.camera.top    =  camSize;
+light.shadow.camera.bottom = -camSize;
+light.shadow.camera.near   = 0.1;
+light.shadow.camera.far    = 20;
 scene.add( light );
+
+// 隐形阴影接收平面
+const groundGeo = new THREE.PlaneGeometry(20, 20);
+const shadowMat = new THREE.ShadowMaterial({ opacity: 0.5 }); // 透明度可调
+const ground = new THREE.Mesh(groundGeo, shadowMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
 
 // lookat target
 const lookAtTarget = new THREE.Object3D();
@@ -1471,6 +1491,14 @@ loader.load(
         VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
         // calling these functions greatly improves the performance
         VRMUtils.removeUnnecessaryVertices( gltf.scene );
+
+        gltf.scene.traverse( ( obj ) => {
+            if ( obj.isMesh ) {
+                obj.castShadow = true;        // 产生阴影
+                obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+            }
+        } );
+
         VRMUtils.combineSkeletons( gltf.scene );
         VRMUtils.combineMorphs( vrm );
 
