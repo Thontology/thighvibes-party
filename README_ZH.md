@@ -30,41 +30,6 @@
 
 - ✅ 全平台兼容适配：覆盖Windows/macOS/Linux原生运行环境，支持Docker容器化部署与Web端云服务，满足多场景技术栈需求。
 
-![image](doc/image/demo.png)
-
-## 软件截图
-
-### 多服务商支持：本地部署引擎(ollama/dify等等)以及云服务商接口均支持
-![image](doc/image/model1.jpeg)
-
-### 海量工具：内置各种工具(如知识库、联网、智能家居、浏览器控制)，支持异步调用，不阻塞智能体回复
-![image](doc/image/HA2.jpeg)
-
-### VRM桌宠：支持上传自定义VRM模型，打造专属桌面伴侣
-![image](doc/image/vrmbot3.jpeg)
-
-### 酒馆角色卡：支持酒馆角色卡，支持长期记忆
-![image](doc/image/card4.jpeg)
-
-### 微信机器人：模拟用户操作，非入侵式的接管你的微信，避免风控
-![image](doc/image/wxbot5.jpeg)
-
-### QQ机器人：支持一键部署到QQ官方机器人，方便用户随时随地使用智能体
-![image](doc/image/qqbot6.jpeg)
-
-### 开发者友好：开放openai API接口、MCP接口，可以将智能体对外转接
-![image](doc/image/API7.jpeg)
-
-### 接入comfyui：将comfyui工作流转换为智能体工具，多comfyui服务器负载均衡
-![image](doc/image/comfyui8.jpeg)
-
-## 硬件要求
-
-- CPU：2核及以上
-- 内存：2GB及以上
-
-**因为所有的模型都是可选的，可以接入本地部署引擎，也可以全部使用云服务商的接口，所以硬件要求几乎没有。在2核2G的云服务器上测试docker版本可以正常运行** 
-
 ## 快速开始
 
 ### windows桌面版安装
@@ -135,6 +100,39 @@
   chmod +x start_with_dev.sh
   ./start_with_dev.sh
   ```
+
+## 软件截图
+
+### 多服务商支持：本地部署引擎(ollama/dify等等)以及云服务商接口均支持
+![image](doc/image/model1.jpeg)
+
+### 海量工具：内置各种工具(如知识库、联网、智能家居、浏览器控制)，支持异步调用，不阻塞智能体回复
+![image](doc/image/HA2.jpeg)
+
+### VRM桌宠：支持上传自定义VRM模型，打造专属桌面伴侣
+![image](doc/image/vrmbot3.jpeg)
+
+### 酒馆角色卡：支持酒馆角色卡，支持长期记忆
+![image](doc/image/card4.jpeg)
+
+### 微信机器人：模拟用户操作，非入侵式的接管你的微信，避免风控
+![image](doc/image/wxbot5.jpeg)
+
+### QQ机器人：支持一键部署到QQ官方机器人，方便用户随时随地使用智能体
+![image](doc/image/qqbot6.jpeg)
+
+### 开发者友好：开放openai API接口、MCP接口，可以将智能体对外转接
+![image](doc/image/API7.jpeg)
+
+### 接入comfyui：将comfyui工作流转换为智能体工具，多comfyui服务器负载均衡
+![image](doc/image/comfyui8.jpeg)
+
+## 硬件要求
+
+- CPU：2核及以上
+- 内存：2GB及以上
+
+**因为所有的模型都是可选的，可以接入本地部署引擎，也可以全部使用云服务商的接口，所以硬件要求几乎没有。在2核2G的云服务器上测试docker版本可以正常运行** 
 
 ## 使用方法
 
