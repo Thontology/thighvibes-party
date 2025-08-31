@@ -2996,6 +2996,7 @@ let vue_methods = {
       this.newMemory.alternateGreetings.push('');
     },
     async addMemory() {
+      this.selectMemoryProvider(this.newMemory.providerId);
       /* 把新字段组装成一个“记忆”对象 */
       const build = () => ({
         id: this.newMemory.id || uuid.v4(),
