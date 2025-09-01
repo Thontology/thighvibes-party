@@ -226,3 +226,7 @@
 2. 微信群：`we_glm`（添加小助手微信后进群）
 
 3. discord:[discord链接](https://discord.gg/f2dsAKKr2V)
+
+## 星标历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=heshengtao/super-agent-party&type=Date)](https://www.star-history.com/#heshengtao/super-agent-party&Date)

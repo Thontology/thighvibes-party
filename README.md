@@ -226,3 +226,7 @@ If you have any questions or issues with the project, you are welcome to join ou
 2. WeChat Group: `we_glm` (add the assistant's WeChat and join the group)
 
 3. Discord: [Discord link](https://discord.gg/f2dsAKKr2V)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=heshengtao/super-agent-party&type=Date)](https://www.star-history.com/#heshengtao/super-agent-party&Date)
