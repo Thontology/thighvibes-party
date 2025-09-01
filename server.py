@@ -1,5 +1,6 @@
 # -- coding: utf-8 --
 import base64
+from datetime import datetime
 import glob
 from io import BytesIO
 import os
@@ -2279,7 +2280,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     async def add_async():
                         loop = asyncio.get_event_loop()
                         # 绑定 user_id 关键字参数
-                        func = partial(m0.add, user_id=memoryId)
+                        metadata = {
+                            "timetamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        }
+                        func = partial(m0.add, user_id=memoryId,metadata=metadata)
                         # 传递 messages 作为位置参数
                         await loop.run_in_executor(executor, func, messages)
                         print("知识库更新完成")
@@ -3160,7 +3164,10 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             async def add_async():
                 loop = asyncio.get_event_loop()
                 # 绑定 user_id 关键字参数
-                func = partial(m0.add, user_id=memoryId)
+                metadata = {
+                    "timetamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                func = partial(m0.add, user_id=memoryId,metadata=metadata)
                 # 传递 messages 作为位置参数
                 await loop.run_in_executor(executor, func, messages)
                 print("知识库更新完成")

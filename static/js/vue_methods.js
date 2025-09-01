@@ -1085,7 +1085,7 @@ let vue_methods = {
           await this.sendMessage();
         }
       }
-      if (event.key === this.asrSettings.hotkey) {
+      if (event.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
         event.preventDefault();
         this.asrSettings.enabled = false;
         await this.toggleASR();
@@ -1093,7 +1093,7 @@ let vue_methods = {
     },
     async handleKeyUp(event) {
       if (event.repeat) return;
-      if (event.key === this.asrSettings.hotkey) {
+      if (event.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
         event.preventDefault();
         this.asrSettings.enabled = true;
         await this.toggleASR();
