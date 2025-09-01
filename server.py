@@ -986,14 +986,16 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 break
         if chat_vendor == 'Dify':
             try:
-                if len(request.messages) >= 3 and request.messages[2]['role'] == 'user':
-                    if request.messages[1]['role'] == 'assistant':
-                        request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
-                    if request.messages[0]['role'] == 'system':
-                        request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
-                if len(request.messages) >= 2 and request.messages[1]['role'] == 'user':
-                    if request.messages[0]['role'] == 'system':
-                        request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
+                if len(request.messages) >= 3:
+                    if request.messages[2]['role'] == 'user':
+                        if request.messages[1]['role'] == 'assistant':
+                            request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
+                        if request.messages[0]['role'] == 'system':
+                            request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
+                elif len(request.messages) >= 2:
+                    if request.messages[1]['role'] == 'user':
+                        if request.messages[0]['role'] == 'system':
+                            request.messages[1]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
             except Exception as e:
                 print("Dify error:",e)
         model = settings['model']
@@ -2682,14 +2684,16 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 break
         if chat_vendor == 'Dify':
             try:
-                if len(request.messages) >= 3 and request.messages[2]['role'] == 'user':
-                    if request.messages[1]['role'] == 'assistant':
-                        request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
-                    if request.messages[0]['role'] == 'system':
-                        request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
-                if len(request.messages) >= 2 and request.messages[1]['role'] == 'user':
-                    if request.messages[0]['role'] == 'system':
-                        request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
+                if len(request.messages) >= 3:
+                    if request.messages[2]['role'] == 'user':
+                        if request.messages[1]['role'] == 'assistant':
+                            request.messages[2]['content'] = "你上一次的发言：\n" +request.messages[0]['content'] + "\n你上一次的发言结束\n\n用户：" + request.messages[2]['content']
+                        if request.messages[0]['role'] == 'system':
+                            request.messages[2]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n" + request.messages[2]['content']
+                elif len(request.messages) >= 2:
+                    if request.messages[1]['role'] == 'user':
+                        if request.messages[0]['role'] == 'system':
+                            request.messages[1]['content'] = "系统提示：\n" +request.messages[0]['content'] + "\n系统提示结束\n\n用户：" + request.messages[1]['content']
             except Exception as e:
                 print("Dify error:",e)
         if settings['webSearch']['enabled'] or enable_web_search:
