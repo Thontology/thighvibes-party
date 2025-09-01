@@ -1492,12 +1492,24 @@ loader.load(
         // calling these functions greatly improves the performance
         VRMUtils.removeUnnecessaryVertices( gltf.scene );
 
-        gltf.scene.traverse( ( obj ) => {
-            if ( obj.isMesh ) {
-                obj.castShadow = true;        // 产生阴影
-                obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+        // 添加材质修复
+        gltf.scene.traverse((obj) => {
+        if (obj.isMesh && obj.material) {
+            // 解决透明材质黑边问题
+            if (obj.material.transparent) {
+            obj.material.alphaTest = 0.5;
+            obj.material.depthWrite = false;
+            obj.material.needsUpdate = true;
             }
-        } );
+            
+            // 确保正确混合模式
+            obj.material.blending = THREE.NormalBlending;
+            obj.material.premultipliedAlpha = true;
+            
+            // 设置渲染顺序
+            obj.renderOrder = obj.material.transparent ? 1 : 0;
+        }
+        });
 
         VRMUtils.combineSkeletons( gltf.scene );
         VRMUtils.combineMorphs( vrm );
@@ -2451,12 +2463,24 @@ async function switchToModel(index) {
                 VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
                 // 优化性能
                 VRMUtils.removeUnnecessaryVertices(gltf.scene);
-                gltf.scene.traverse( ( obj ) => {
-                    if ( obj.isMesh ) {
-                        obj.castShadow = true;        // 产生阴影
-                        obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+                // 添加材质修复
+                gltf.scene.traverse((obj) => {
+                if (obj.isMesh && obj.material) {
+                    // 解决透明材质黑边问题
+                    if (obj.material.transparent) {
+                    obj.material.alphaTest = 0.5;
+                    obj.material.depthWrite = false;
+                    obj.material.needsUpdate = true;
                     }
-                } );
+                    
+                    // 确保正确混合模式
+                    obj.material.blending = THREE.NormalBlending;
+                    obj.material.premultipliedAlpha = true;
+                    
+                    // 设置渲染顺序
+                    obj.renderOrder = obj.material.transparent ? 1 : 0;
+                }
+                });
 
                 VRMUtils.combineSkeletons(gltf.scene);
                 VRMUtils.combineMorphs(vrm);
