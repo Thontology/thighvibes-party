@@ -42,4 +42,3 @@ wxauto; sys_platform == 'win32'
 wikipedia-api
 arxiv
 ddgs
-dify-client-python
