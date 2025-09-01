@@ -2451,6 +2451,13 @@ async function switchToModel(index) {
                 VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
                 // 优化性能
                 VRMUtils.removeUnnecessaryVertices(gltf.scene);
+                gltf.scene.traverse( ( obj ) => {
+                    if ( obj.isMesh ) {
+                        obj.castShadow = true;        // 产生阴影
+                        obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+                    }
+                } );
+
                 VRMUtils.combineSkeletons(gltf.scene);
                 VRMUtils.combineMorphs(vrm);
                 
