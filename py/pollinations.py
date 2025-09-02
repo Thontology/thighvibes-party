@@ -19,7 +19,7 @@ async def pollinations_image(prompt: str, width=512, height=512, model="flux"):
     prompt = prompt.replace(" ", "%20")
     url = f"https://image.pollinations.ai/prompt/{prompt}?width={width}&height={height}&model={model}&nologo=true&enhance=true&private=true&safe=true"
     
-    return f"[image]({url})"
+    return f"![image]({url})"
 
 pollinations_image_tool = {
     "type": "function",
