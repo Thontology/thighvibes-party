@@ -19,13 +19,13 @@ async def pollinations_image(prompt: str, width=512, height=512, model="flux"):
     prompt = prompt.replace(" ", "%20")
     url = f"https://image.pollinations.ai/prompt/{prompt}?width={width}&height={height}&model={model}&nologo=true&enhance=true&private=true&safe=true"
     
-    return f"[image]({url})"
+    return f"![image]({url})"
 
 pollinations_image_tool = {
     "type": "function",
     "function": {
         "name": "pollinations_image",
-        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你可以直接以原markdown格式发给用户即可，用户将会直接看到图片",
+        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
         "parameters": {
             "type": "object",
             "properties": {
@@ -94,7 +94,7 @@ openai_image_tool = {
     "type": "function",
     "function": {
         "name": "openai_image",
-        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你可以直接以原markdown格式发给用户即可，用户将会直接看到图片",
+        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
         "parameters": {
             "type": "object",
             "properties": {
@@ -144,7 +144,7 @@ siliconflow_image_tool = {
     "type": "function",
     "function": {
         "name": "siliconflow_image",
-        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你可以直接以原markdown格式发给用户即可，用户将会直接看到图片",
+        "description": "通过英文prompt生成图片，并返回markdown格式的图片链接，你必须直接以原markdown格式发给用户，用户才能直接看到图片。\n当你需要发送图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！",
         "parameters": {
             "type": "object",
             "properties": {
