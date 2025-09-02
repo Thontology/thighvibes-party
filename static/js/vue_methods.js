@@ -2931,6 +2931,104 @@ let vue_methods = {
         showNotification(this.t('fileDeleteFailed'), 'error');
       }
     },
+    // 顶部“全选 / 取消全选”
+    toggleAll(checked) {
+      this.selectedFiles = checked
+        ? this.textFiles.map(f => f.unique_filename)
+        : [];
+    },
+    async batchDeleteFiles() {
+      if (this.selectedFiles.length === 0) return;
+
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileNames: this.selectedFiles })
+        });
+        const data = await res.json();
+
+        // 只要后端说“有成功”就提示成功
+        if (data.success && data.successFiles?.length) {
+          // 把后端返回已成功删除的文件干掉
+          this.textFiles = this.textFiles.filter(
+            f => !data.successFiles.includes(f.unique_filename)
+          );
+          this.selectedFiles = [];          // 清空选中
+          showNotification(this.t('batchDeleteSuccess'), 'success');
+          await this.autoSaveSettings();
+        } else {
+          console.log('batchDeleteFiles error:', data);
+          showNotification(this.t('batchDeleteFailed'), 'error');
+        }
+      } catch (e) {
+        console.log('batchDeleteFiles error:', data);
+        showNotification(this.t('batchDeleteFailed'), 'error');
+      }
+    },
+
+    // 图片全选切换
+    toggleAllImages(checked) {
+      this.selectedImages = checked
+        ? this.imageFiles.map(i => i.unique_filename)
+        : []
+    },
+    
+    // 视频全选切换
+    toggleAllVideos(checked) {
+      this.selectedVideos = checked
+        ? this.videoFiles.map(v => v.unique_filename)
+        : []
+    },
+    
+    // 图片批量删除
+    async batchDeleteImages() {
+      if(!this.selectedImages.length) return
+      
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fileNames: this.selectedImages})
+        })
+        
+        if(res.ok) {
+          // 更新前端列表
+          this.imageFiles = this.imageFiles.filter(
+            img => !this.selectedImages.includes(img.unique_filename)
+          )
+          this.selectedImages = []
+          showNotification(this.t('batchDeleteSuccess'), 'success')
+          await this.autoSaveSettings();
+        }
+      } catch(e) {
+        showNotification(this.t('batchDeleteFailed'), 'error')
+      }
+    },
+    
+    // 视频批量删除（复用同一API）
+    async batchDeleteVideos() {
+      if(!this.selectedVideos.length) return
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fileNames: this.selectedVideos})
+        })
+        
+        if(res.ok) {
+          // 更新前端列表
+          this.videoFiles = this.videoFiles.filter(
+            img => !this.selectedVideos.includes(img.unique_filename)
+          )
+          this.selectedVideos = []
+          showNotification(this.t('batchDeleteSuccess'), 'success')
+          await this.autoSaveSettings();
+        }
+      } catch(e) {
+        showNotification(this.t('batchDeleteFailed'), 'error')
+      }
+    },
     async deleteImage(img) {
       this.imageFiles = this.imageFiles.filter(i => i !== img);
       await this.autoSaveSettings();

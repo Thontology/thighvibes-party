@@ -5147,9 +5147,31 @@ if ('serviceWorker' in navigator) {
             <div class="suite-content">
               <!-- 文本存储 -->
               <div v-show="subMenu === 'text'" class="page text-container">
+                <!-- 顶部工具条 -->
+                <div class="toolbar">
+                  <el-checkbox
+                    v-model="allChecked"
+                    :indeterminate="indeterminate"
+                    @change="toggleAll">
+                    {{ t('selectAll') }}
+                  </el-checkbox>
+                  <el-button
+                    type="danger"
+                    :disabled="selectedFiles.length === 0"
+                    @click="batchDeleteFiles">
+                    <i class="fa-solid fa-trash"></i>
+                    {{ t('batchDelete') }}
+                  </el-button>
+                </div>
                 <div class="text-list">
                   <!-- 文件列表 -->
                   <div class="file-item" v-for="(file, index) in textFiles" :key="index">
+                    <!-- 复选框 -->
+                    <el-checkbox
+                      v-model="selectedFiles"
+                      :label="file.unique_filename"
+                      class="checkbox-no-label">  
+                    </el-checkbox>
                     <el-icon class="file-icon"><i class="fa-solid fa-file-lines"></i></el-icon>
                     <div class="file-info">
                       <span class="file-name">{{ file.original_filename }}</span>
@@ -5179,11 +5201,32 @@ if ('serviceWorker' in navigator) {
               </div>
               <!-- 图片存储 -->
               <div v-show="subMenu === 'image'" class="page image-container">
+                <!-- 新增顶部工具栏 -->
+                <div class="toolbar">
+                  <el-checkbox
+                    v-model="allImagesChecked"
+                    :indeterminate="indeterminateImages"
+                    @change="toggleAllImages">
+                    {{ t('selectAll') }}
+                  </el-checkbox>
+                  <el-button
+                    type="danger"
+                    :disabled="selectedImages.length === 0"
+                    @click="batchDeleteImages">
+                    <i class="fa-solid fa-trash"></i>
+                    {{ t('batchDelete') }}
+                  </el-button>
+                </div>
                 <div class="image-grid">
                   <div class="image-item" v-for="(img, index) in imageFiles" :key="index">
                     <img :src="`${partyURL}/uploaded_files/${img.unique_filename}`" class="thumbnail"/>
                     <div class="image-overlay">
-                      <span class="image-name">{{ img.name }}</span>
+                      <!-- 复选框 -->
+                      <el-checkbox
+                        v-model="selectedImages"
+                        :label="img.unique_filename"
+                        class="checkbox-no-label">
+                      </el-checkbox>
                       <div class="image-actions">
                         <!-- 复制链接按钮 -->
                         <el-button circle size="small" class="image-actions-btn" @click="copyLink(img.unique_filename)">
@@ -5227,6 +5270,22 @@ if ('serviceWorker' in navigator) {
               </div>
               <!-- 视频存储 -->
               <div v-show="subMenu === 'video'" class="page video-container">
+                <!-- 新增顶部工具栏 -->
+                <div class="toolbar">
+                  <el-checkbox
+                    v-model="allVideosChecked"
+                    :indeterminate="indeterminateVideos"
+                    @change="toggleAllVideos">
+                    {{ t('selectAll') }}
+                  </el-checkbox>
+                  <el-button
+                    type="danger"
+                    :disabled="selectedVideos.length === 0"
+                    @click="batchDeleteVideos">
+                    <i class="fa-solid fa-trash"></i>
+                    {{ t('batchDelete') }}
+                  </el-button>
+                </div>
                 <div class="video-list">
                   <div class="video-item" v-for="(video, index) in videoFiles" :key="index">
                     <div class="video-wrapper">
@@ -5235,7 +5294,12 @@ if ('serviceWorker' in navigator) {
                         <source :src="`${partyURL}/uploaded_files/${video.unique_filename}`" type="video/mp4">
                         Your browser does not support the video tag.
                       </video>
-
+                      <!-- 复选框 -->
+                      <el-checkbox
+                        v-model="selectedVideos"
+                        :label="video.unique_filename"
+                        class="checkbox-no-label">
+                      </el-checkbox>
                       <!-- 删除按钮定位在视频右上角 -->
                       <el-button class="delete-overlay-btn" type="danger" circle @click="deleteVideo(video)">
                         <i class="fa-solid fa-trash"></i>

@@ -164,7 +164,9 @@ loader.crossOrigin = 'anonymous';
 
 loader.register( ( parser ) => {
 
-    return new VRMLoaderPlugin( parser );
+    return new VRMLoaderPlugin(parser,{
+        lookAt: { type: 'bone' }
+    });
 
 } );
 
@@ -913,9 +915,15 @@ async function getAnimationFiles() {
 
     // 4. 如果没有任何选中，给个兜底
     if (urls.length === 0) {
-      const fallback = `${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`;
+      const fallback = 
+      [
+        `${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/play_fingers.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/scratch_head.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/stretch.vrma`
+      ];
       console.warn('没有选中任何动作，使用兜底动画');
-      return [fallback];
+      return fallback;
     }
 
     console.log('本次要加载的 VRMA：', urls);
@@ -1492,12 +1500,24 @@ loader.load(
         // calling these functions greatly improves the performance
         VRMUtils.removeUnnecessaryVertices( gltf.scene );
 
-        gltf.scene.traverse( ( obj ) => {
-            if ( obj.isMesh ) {
-                obj.castShadow = true;        // 产生阴影
-                obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+        // 添加材质修复
+        gltf.scene.traverse((obj) => {
+        if (obj.isMesh && obj.material) {
+            // 解决透明材质黑边问题
+            if (obj.material.transparent) {
+            obj.material.alphaTest = 0.5;
+            obj.material.depthWrite = false;
+            obj.material.needsUpdate = true;
             }
-        } );
+            
+            // 确保正确混合模式
+            obj.material.blending = THREE.NormalBlending;
+            obj.material.premultipliedAlpha = true;
+            
+            // 设置渲染顺序
+            obj.renderOrder = obj.material.transparent ? 1 : 0;
+        }
+        });
 
         VRMUtils.combineSkeletons( gltf.scene );
         VRMUtils.combineMorphs( vrm );
@@ -1716,6 +1736,9 @@ function animate() {
     if (currentVrm) {
         // 只需要更新 VRM 和 Mixer
         currentVrm.update(deltaTime);
+        if (currentVrm.lookAt) {
+            currentVrm.lookAt.update(deltaTime);
+        }
     }
     
     if (currentMixer) {
@@ -2451,12 +2474,24 @@ async function switchToModel(index) {
                 VRMUtils.rotateVRM0(vrm); // 旋转 VRM 使其面向正前方
                 // 优化性能
                 VRMUtils.removeUnnecessaryVertices(gltf.scene);
-                gltf.scene.traverse( ( obj ) => {
-                    if ( obj.isMesh ) {
-                        obj.castShadow = true;        // 产生阴影
-                        obj.receiveShadow = true;     // 自己也能被影子覆盖（看需求）
+                // 添加材质修复
+                gltf.scene.traverse((obj) => {
+                if (obj.isMesh && obj.material) {
+                    // 解决透明材质黑边问题
+                    if (obj.material.transparent) {
+                    obj.material.alphaTest = 0.5;
+                    obj.material.depthWrite = false;
+                    obj.material.needsUpdate = true;
                     }
-                } );
+                    
+                    // 确保正确混合模式
+                    obj.material.blending = THREE.NormalBlending;
+                    obj.material.premultipliedAlpha = true;
+                    
+                    // 设置渲染顺序
+                    obj.renderOrder = obj.material.transparent ? 1 : 0;
+                }
+                });
 
                 VRMUtils.combineSkeletons(gltf.scene);
                 VRMUtils.combineMorphs(vrm);

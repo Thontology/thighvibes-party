@@ -470,10 +470,7 @@ let vue_data = {
       '<sad>',
       '<neutral>',
       '<surprised>', 
-      '<relaxed>',
-      '<blink>', 
-      '<blinkLeft>', 
-      '<blinkRight>'],
+      '<relaxed>'],
     newGsvAudio: {
       name: '',
       path: '',
@@ -1001,6 +998,13 @@ let vue_data = {
     textFiles: [],
     imageFiles: [],
     videoFiles: [],
+    selectedFiles: [],      // 存 unique_filename
+    selectedImages: [],
+    allImagesChecked: false,
+    indeterminateImages: false,
+    selectedVideos: [],
+    allVideosChecked: false,
+    indeterminateVideos: false,
     subMenu: '', // 新增子菜单状态
     isWorldviewSettingsExpanded: true,
     isRandomSettingsExpanded: true,
