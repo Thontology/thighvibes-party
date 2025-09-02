@@ -164,7 +164,9 @@ loader.crossOrigin = 'anonymous';
 
 loader.register( ( parser ) => {
 
-    return new VRMLoaderPlugin( parser );
+    return new VRMLoaderPlugin(parser,{
+        lookAt: { type: 'bone' }
+    });
 
 } );
 
@@ -913,9 +915,15 @@ async function getAnimationFiles() {
 
     // 4. 如果没有任何选中，给个兜底
     if (urls.length === 0) {
-      const fallback = `${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`;
+      const fallback = 
+      [
+        `${window.location.protocol}//${window.location.host}/vrm/animations/akimbo.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/play_fingers.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/scratch_head.vrma`,
+       `${window.location.protocol}//${window.location.host}/vrm/animations/stretch.vrma`
+      ];
       console.warn('没有选中任何动作，使用兜底动画');
-      return [fallback];
+      return fallback;
     }
 
     console.log('本次要加载的 VRMA：', urls);
@@ -1728,6 +1736,9 @@ function animate() {
     if (currentVrm) {
         // 只需要更新 VRM 和 Mixer
         currentVrm.update(deltaTime);
+        if (currentVrm.lookAt) {
+            currentVrm.lookAt.update(deltaTime);
+        }
     }
     
     if (currentMixer) {
