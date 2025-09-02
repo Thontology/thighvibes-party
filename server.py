@@ -541,6 +541,12 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
                 else:
                     request.messages.insert(0, {'role': 'system', 'content': sticker_message})
         request.messages[0]['content'] += "\n\n当你需要使用图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！"
+    if settings['text2imgSettings']['enabled']:
+        text2img_messages = "\n\n当你使用画图工具后，必须将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！请主动发给用户，工具返回的结果，用户看不到！"
+        if request.messages and request.messages[0]['role'] == 'system':
+            request.messages[0]['content'] += text2img_messages
+        else:
+            request.messages.insert(0, {'role': 'system', 'content': text2img_messages})
     if settings['VRMConfig']['enabledExpressions']:
         Expression_messages = "\n\n你可以使用以下表情：<happy> <angry> <sad> <neutral> <surprised> <relaxed>\n\n你可以在句子开头插入表情符号以驱动人物的当前表情，注意！你需要将表情符号放到句子的开头，才能在说这句话的时候同步做表情，例如：<angry>我真的生气了。<surprised>哇！<happy>我好开心。\n\n一定要把表情符号跟要做表情的句子放在同一行，如果表情符号和要做表情的句子中间有换行符，表情也将不会生效，例如：\n\n<happy>\n我好开心。\n\n此时，表情符号将不会生效。"
         if request.messages and request.messages[0]['role'] == 'system':
