@@ -171,6 +171,20 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    allChecked: {
+      get() {
+        return this.textFiles.length > 0 && this.selectedFiles.length === this.textFiles.length;
+      },
+      set(val) {
+        this.selectedFiles = val ? this.textFiles.map(f => f.unique_filename) : [];
+      }
+    },
+    indeterminate() {
+      return (
+        this.selectedFiles.length > 0 &&
+        this.selectedFiles.length < this.textFiles.length
+      );
+    },
     sidebarStyle() {
       return {
         width: this.isMobile ? 

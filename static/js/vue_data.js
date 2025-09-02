@@ -1001,6 +1001,7 @@ let vue_data = {
     textFiles: [],
     imageFiles: [],
     videoFiles: [],
+    selectedFiles: [],      // 存 unique_filename
     subMenu: '', // 新增子菜单状态
     isWorldviewSettingsExpanded: true,
     isRandomSettingsExpanded: true,

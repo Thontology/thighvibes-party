@@ -2931,6 +2931,41 @@ let vue_methods = {
         showNotification(this.t('fileDeleteFailed'), 'error');
       }
     },
+    // 顶部“全选 / 取消全选”
+    toggleAll(checked) {
+      this.selectedFiles = checked
+        ? this.textFiles.map(f => f.unique_filename)
+        : [];
+    },
+    async batchDeleteFiles() {
+      if (this.selectedFiles.length === 0) return;
+
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileNames: this.selectedFiles })
+        });
+        const data = await res.json();
+
+        // 只要后端说“有成功”就提示成功
+        if (data.success && data.successFiles?.length) {
+          // 把后端返回已成功删除的文件干掉
+          this.textFiles = this.textFiles.filter(
+            f => !data.successFiles.includes(f.unique_filename)
+          );
+          this.selectedFiles = [];          // 清空选中
+          showNotification(this.t('batchDeleteSuccess'), 'success');
+          await this.autoSaveSettings();
+        } else {
+          console.log('batchDeleteFiles error:', data);
+          showNotification(this.t('batchDeleteFailed'), 'error');
+        }
+      } catch (e) {
+        console.log('batchDeleteFiles error:', data);
+        showNotification(this.t('batchDeleteFailed'), 'error');
+      }
+    },
     async deleteImage(img) {
       this.imageFiles = this.imageFiles.filter(i => i !== img);
       await this.autoSaveSettings();

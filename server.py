@@ -4656,6 +4656,30 @@ async def delete_file_endpoint(request: Request):
     except Exception as e:
         return JSONResponse(content={"success": False, "message": str(e)})
 
+class FileNames(BaseModel):
+    fileNames: List[str]
+
+@app.delete("/delete_files")
+async def delete_files_endpoint(req: FileNames):
+    success_files = []
+    errors = []
+    for name in req.fileNames:
+        path = os.path.join(UPLOAD_FILES_DIR, name)
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+                success_files.append(name)
+            else:
+                errors.append(f"{name} not found")
+        except Exception as e:
+            errors.append(f"{name}: {str(e)}")
+
+    return JSONResponse(content={
+        "success": len(success_files) > 0,   # 只要有成功就算成功
+        "successFiles": success_files,
+        "errors": errors
+    })
+
 ALLOWED_AUDIO_EXTENSIONS = ['wav', 'mp3', 'ogg', 'flac', 'aac']
 
 @app.post("/upload_gsv_ref_audio")

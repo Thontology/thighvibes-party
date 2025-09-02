@@ -3174,3 +3174,43 @@ body {
   display: flex; /* 水平排列按钮 */
   margin: 0px;
 }
+
+.checkbox-no-label .el-checkbox__label {
+  display: none;
+}
+
+/* 工具栏整体 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 12px;
+  gap: 12px;        /* flex 子项间距 */
+}
+
+/* 全选复选框文字样式 */
+.select-all-checkbox .el-checkbox__label {
+  font-weight: 500;
+  color: #303133;
+  margin-left: 6px;
+}
+
+/* 批量删除按钮 */
+.batch-del-btn {
+  border-radius: 20px;        /* 胶囊形状 */
+  padding: 6px 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(245, 108, 108, 0.2);
+  transition: transform 0.15s;
+}
+.batch-del-btn:not(:disabled):hover {
+  transform: scale(1.05);
+}
+.batch-del-btn:disabled {
+  box-shadow: none;
+  transform: none;
+}

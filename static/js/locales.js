@@ -729,6 +729,8 @@ key3`,
         'customTTSspeed': '自定义TTS语速',
         'gsvGsvAudioPath': '参考音频路径（如果上传了文件可不填）',
         'gsvGsvAudioPathPlaceholder': '请输入参考音频路径',
+        'selectAll': '全选',
+        'batchDelete': '批量删除',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1457,5 +1459,7 @@ Key3`,
         'customTTSspeed': 'Custom TTS speed',
         'gsvGsvAudioPath':'Refer to the audio path (if the file is uploaded, leave it blank)',
         'gsvGsvAudioPathPlaceholder': 'Please enter the audio path',
+        'selectAll': 'Select All',
+        'batchDelete': 'Batch Delete',
     }
   };

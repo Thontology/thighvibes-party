@@ -5147,9 +5147,31 @@ if ('serviceWorker' in navigator) {
             <div class="suite-content">
               <!-- 文本存储 -->
               <div v-show="subMenu === 'text'" class="page text-container">
+                <!-- 顶部工具条 -->
+                <div class="toolbar">
+                  <el-checkbox
+                    v-model="allChecked"
+                    :indeterminate="indeterminate"
+                    @change="toggleAll">
+                    {{ t('selectAll') }}
+                  </el-checkbox>
+                  <el-button
+                    type="danger"
+                    :disabled="selectedFiles.length === 0"
+                    @click="batchDeleteFiles">
+                    <i class="fa-solid fa-trash"></i>
+                    {{ t('batchDelete') }}
+                  </el-button>
+                </div>
                 <div class="text-list">
                   <!-- 文件列表 -->
                   <div class="file-item" v-for="(file, index) in textFiles" :key="index">
+                    <!-- 复选框 -->
+                    <el-checkbox
+                      v-model="selectedFiles"
+                      :label="file.unique_filename"
+                      class="checkbox-no-label">  
+                    </el-checkbox>
                     <el-icon class="file-icon"><i class="fa-solid fa-file-lines"></i></el-icon>
                     <div class="file-info">
                       <span class="file-name">{{ file.original_filename }}</span>
