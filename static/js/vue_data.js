@@ -470,10 +470,7 @@ let vue_data = {
       '<sad>',
       '<neutral>',
       '<surprised>', 
-      '<relaxed>',
-      '<blink>', 
-      '<blinkLeft>', 
-      '<blinkRight>'],
+      '<relaxed>'],
     newGsvAudio: {
       name: '',
       path: '',
