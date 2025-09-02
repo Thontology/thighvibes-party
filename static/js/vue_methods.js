@@ -2966,6 +2966,69 @@ let vue_methods = {
         showNotification(this.t('batchDeleteFailed'), 'error');
       }
     },
+
+    // 图片全选切换
+    toggleAllImages(checked) {
+      this.selectedImages = checked
+        ? this.imageFiles.map(i => i.unique_filename)
+        : []
+    },
+    
+    // 视频全选切换
+    toggleAllVideos(checked) {
+      this.selectedVideos = checked
+        ? this.videoFiles.map(v => v.unique_filename)
+        : []
+    },
+    
+    // 图片批量删除
+    async batchDeleteImages() {
+      if(!this.selectedImages.length) return
+      
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fileNames: this.selectedImages})
+        })
+        
+        if(res.ok) {
+          // 更新前端列表
+          this.imageFiles = this.imageFiles.filter(
+            img => !this.selectedImages.includes(img.unique_filename)
+          )
+          this.selectedImages = []
+          showNotification(this.t('batchDeleteSuccess'), 'success')
+          await this.autoSaveSettings();
+        }
+      } catch(e) {
+        showNotification(this.t('batchDeleteFailed'), 'error')
+      }
+    },
+    
+    // 视频批量删除（复用同一API）
+    async batchDeleteVideos() {
+      if(!this.selectedVideos.length) return
+      try {
+        const res = await fetch('/delete_files', {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({fileNames: this.selectedVideos})
+        })
+        
+        if(res.ok) {
+          // 更新前端列表
+          this.videoFiles = this.videoFiles.filter(
+            img => !this.selectedVideos.includes(img.unique_filename)
+          )
+          this.selectedVideos = []
+          showNotification(this.t('batchDeleteSuccess'), 'success')
+          await this.autoSaveSettings();
+        }
+      } catch(e) {
+        showNotification(this.t('batchDeleteFailed'), 'error')
+      }
+    },
     async deleteImage(img) {
       this.imageFiles = this.imageFiles.filter(i => i !== img);
       await this.autoSaveSettings();

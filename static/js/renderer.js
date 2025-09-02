@@ -185,6 +185,31 @@ const app = Vue.createApp({
         this.selectedFiles.length < this.textFiles.length
       );
     },
+    // 图片全选状态
+    allImagesChecked: {
+      get() {
+        return this.imageFiles.length > 0 && 
+              this.selectedImages.length === this.imageFiles.length
+      },
+      set(val) {
+        this.selectedImages = val 
+          ? this.imageFiles.map(i => i.unique_filename) 
+          : []
+      }
+    },
+    
+    // 视频全选状态
+    allVideosChecked: {
+      get() {
+        return this.videoFiles.length > 0 && 
+              this.selectedVideos.length === this.videoFiles.length
+      },
+      set(val) {
+        this.selectedVideos = val 
+          ? this.videoFiles.map(v => v.unique_filename) 
+          : []
+      }
+    },
     sidebarStyle() {
       return {
         width: this.isMobile ? 

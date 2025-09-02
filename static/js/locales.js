@@ -731,6 +731,8 @@ key3`,
         'gsvGsvAudioPathPlaceholder': '请输入参考音频路径',
         'selectAll': '全选',
         'batchDelete': '批量删除',
+        'batchDeleteSuccess': '批量删除成功',
+        'batchDeleteFailed': '批量删除失败',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1461,5 +1463,7 @@ Key3`,
         'gsvGsvAudioPathPlaceholder': 'Please enter the audio path',
         'selectAll': 'Select All',
         'batchDelete': 'Batch Delete',
+        'batchDeleteSuccess': 'Batch delete success',
+        'batchDeleteFailed': 'Batch delete fail',
     }
   };
