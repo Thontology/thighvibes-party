@@ -1699,7 +1699,11 @@ function updateSubtitle(text, chunkIndex) {
     if (!isSubtitleEnabled) return;
     
     if (!subtitleElement) initSubtitleElement();
-    
+    // 如果text只包含空白字符，则清除字幕
+    if (!text.trim()) {
+        clearSubtitle();
+        return;
+    }
     currentSubtitleChunkIndex = chunkIndex;
     
     subtitleElement.style.opacity = '0';
