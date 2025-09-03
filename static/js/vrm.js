@@ -1352,13 +1352,20 @@ function startChunkAnimation(chunkId, chunkState) {
             
             // 处理其他表情
             if (expression) {
-                if (['happy', 'angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
+                // 1. 将 口型动画 添加到 mouthExpressionNames（作为被覆盖者）
+                currentVrm.expressionManager.mouthExpressionNames = ['aa'];
+
+                // 2. 为'happy', 'surprised'表情设置 overrideMouth 属性（作为覆盖者）
+                const mouthExpressions = ['happy', 'surprised'];
+
+                mouthExpressions.forEach(expressionName => {
+                    const exp = currentVrm.expressionManager.getExpression(expressionName);
+                    if (exp) {
+                        exp.overrideMouth = 'block'; 
+                    }
+                });
+                if (['surprised','happy','angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
                     currentVrm.expressionManager.setValue(expression, 1.0);
-                    if (expression === 'happy') max_mouthOpen = 0.2;
-                } else if (expression === 'surprised') {
-                    // 惊讶表情持续2秒 (30fps * 2)
-                    currentVrm.expressionManager.setValue(expression, frameCount < 60 ? 1.0 : 0.0);
-                    if (frameCount < 60) max_mouthOpen = 0.1;
                 } else if (['blink', 'blinkLeft', 'blinkRight'].includes(expression)) {
                     // 简单的眨眼动画，持续1秒
                     const progress = (frameCount % 30) / 30;
@@ -1368,10 +1375,10 @@ function startChunkAnimation(chunkId, chunkState) {
             }
 
             // 根据音量驱动口型
-            const intensity = Math.min(average / 40, 1.0); // 40是敏感度系数，可调整
+            const intensity = Math.min(average / 6, 1.0); // 40是敏感度系数，可调整
             if (intensity > 0.05) { // 阈值，防止背景噪音导致嘴动
                 const mouthOpen = Math.min(intensity * 1.5, max_mouthOpen);
-                currentVrm.expressionManager.setValue('aa', mouthOpen);
+                currentVrm.expressionManager.setValue('aa', mouthOpen); 
                 // 添加一些'ih'口型作为变化
                 const variation = Math.sin(frameCount * 0.2) * 0.1;
                 currentVrm.expressionManager.setValue('ih', Math.min(Math.max(0, mouthOpen * 0.5 + variation), max_mouthOpen));
@@ -1443,7 +1450,7 @@ async function startLipSyncForChunk(data) {
         const audio = new Audio();
         audio.crossOrigin = 'anonymous';
         audio.src = data.audioDataUrl;
-        audio.volume = 0.01; // 静音播放，我们只关心数据
+        audio.volume = 0.001; // 静音播放，我们只关心数据
         chunkState.audio = audio;
 
         await new Promise((resolve, reject) => {

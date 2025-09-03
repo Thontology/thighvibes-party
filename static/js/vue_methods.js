@@ -4881,6 +4881,7 @@ let vue_methods = {
             remainingText = remainingText.replace(regex, '').trim(); // 移除表情标签
           }
         }
+        remainingText = remainingText.replace(/<[^>]+>/g, ''); // 移除HTML
         chunk_text = remainingText;
         chunk_expressions = exps;
       }
@@ -6245,6 +6246,206 @@ let vue_methods = {
   changeGsvAudioPath() {
     if (this.newGsvAudio.path) {
       this.newGsvAudio.name = this.newGsvAudio.path;
+    }
+  },
+    /* ===============  朗读主流程  =============== */
+  async startRead() {
+    if (!this.ttsSettings.enabled) {
+      this.$message.warning(this.t('ttsNotEnabled'));
+      return;
+    }
+    if (!this.readConfig.longText.trim()) return;
+
+    this.isReadStarting = true;
+    this.isReadRunning  = true;
+    this.isReadStopping = false;
+
+    /* 1. 清空上一次的残留 */
+    this.readState.ttsChunks  = [];
+    this.readState.audioChunks = [];
+    this.readState.currentChunk = 0;
+    this.readState.isPlaying = false;
+
+    /* 2. 分段 */
+    const { chunks ,remaining } = this.splitTTSBuffer(this.readConfig.longText);
+    // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
+    if (remaining) {
+      chunks.push(remaining);
+    }
+    if (!chunks.length) {
+      this.isReadRunning  = false;
+      this.isReadStarting = false;
+      return;
+    }
+    this.readState.ttsChunks = chunks;
+
+    /* 3. 通知 VRM 开始朗读 */
+    this.sendTTSStatusToVRM('ttsStarted', {
+      totalChunks: this.readState.ttsChunks.length
+    });
+
+    this.isReadStarting = false;
+
+    /* 4. 并发 TTS（复用对话逻辑，只是把对象换成 readState） */
+    await this.startReadTTSProcess();
+  },
+
+  stopRead() {
+    if (!this.isReadRunning) return;
+    this.isReadStopping = true;
+    this.isReadRunning  = false;
+
+    /* 停掉当前音频 */
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio = null;
+    }
+    this.sendTTSStatusToVRM('stopSpeaking', {});
+    this.isReadStopping = false;
+  },
+
+  /* ===============  复用 / 微调 TTS 流程  =============== */
+  async startReadTTSProcess() {
+    let max_concurrency = this.ttsSettings.maxConcurrency || 1;
+    let nextIndex = 0;
+
+    /* 与对话版唯一区别：readState 代替 messages[last] */
+    while (this.isReadRunning) {
+      while (
+        this.readState.ttsQueue.size < max_concurrency &&
+        nextIndex < this.readState.ttsChunks.length
+      ) {
+        if (!this.isReadRunning) break;
+
+        const index = nextIndex++;
+        this.readState.ttsQueue.add(index);
+
+        this.processReadTTSChunk(index).finally(() => {
+          this.readState.ttsQueue.delete(index);
+        });
+
+        /* 首包加速 */
+        if (index === 0) await new Promise(r => setTimeout(r, 800));
+      }
+      await new Promise(r => setTimeout(r, 10));
+    }
+    console.log('Read TTS queue processing completed');
+  },
+
+  async processReadTTSChunk(index) {
+    const chunk = this.readState.ttsChunks[index];
+
+    /* —— 与对话版完全一致的文本清洗 —— */
+    let chunk_text = chunk;
+    const exps = [];
+    if (chunk.indexOf('<') !== -1) {
+      for (const exp of this.expressionMap) {
+        const regex = new RegExp(exp, 'g');
+        if (chunk.includes(exp)) {
+          exps.push(exp);
+          chunk_text = chunk_text.replace(regex, '').trim();
+        }
+      }
+    }
+
+    try {
+      const res = await fetch('/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ttsSettings: this.ttsSettings,
+          text: chunk_text,
+          index
+        })
+      });
+
+      if (!res.ok) throw new Error('TTS failed');
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+
+      /* 缓存到 readState */
+      this.readState.audioChunks[index] = {
+        url,
+        expressions: exps,
+        text: chunk_text,
+        index
+      };
+
+      /* Base64 给 VRM */
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      this.cur_audioDatas[index] = `data:${blob.type};base64,${base64}`;
+
+      /* 立刻尝试播放 */
+      this.checkReadAudioPlayback();
+    } catch (e) {
+      console.error(`Read TTS chunk ${index} error`, e);
+      this.readState.audioChunks[index] = { url: null, expressions: exps, text: chunk_text, index };
+      this.cur_audioDatas[index] = null;
+      this.checkReadAudioPlayback();
+    }
+  },
+
+  /* ===============  播放监控  =============== */
+  async startReadAudioPlayProcess() {
+    /* 与对话版的 startAudioPlayProcess 完全一致，只是把 readState 替换掉 */
+    this.readState.currentChunk = 0;
+    this.readState.isPlaying   = false;
+    this.audioPlayQueue = [];
+  },
+
+  async checkReadAudioPlayback() {
+    if (!this.isReadRunning || this.readState.isPlaying) return;
+
+    const curIdx = this.readState.currentChunk;
+    const total  = this.readState.ttsChunks.length;
+    if (curIdx >= total) {
+      /* 全部读完 */
+      console.log('All read audio chunks played');
+      this.readState.currentChunk = 0;
+      this.isReadRunning = false;
+      this.cur_audioDatas = [];
+      this.sendTTSStatusToVRM('allChunksCompleted', {});
+      return;
+    }
+
+    const audioChunk = this.readState.audioChunks[curIdx];
+    if (!audioChunk) return;
+
+    /* 开始播放这一块 */
+    this.readState.isPlaying = true;
+    console.log(`Playing read audio chunk ${curIdx}`);
+
+    try {
+      this.currentAudio = new Audio(audioChunk.url);
+
+      this.sendTTSStatusToVRM('startSpeaking', {
+        audioDataUrl: this.cur_audioDatas[curIdx],
+        chunkIndex: curIdx,
+        totalChunks: total,
+        text: audioChunk.text,
+        expressions: audioChunk.expressions
+      });
+
+      await new Promise(resolve => {
+        this.currentAudio.onended = () => {
+          this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: curIdx });
+          resolve();
+        };
+        this.currentAudio.onerror = resolve;
+        this.currentAudio.play().catch(console.error);
+      });
+    } catch (e) {
+      console.error('Read playback error', e);
+    } finally {
+      this.readState.currentChunk++;
+      this.readState.isPlaying = false;
+      setTimeout(() => this.checkReadAudioPlayback(), 0);
     }
   },
 }
