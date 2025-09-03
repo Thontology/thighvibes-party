@@ -51,9 +51,6 @@ import argparse
 from mem0 import Memory
 from py.qq_bot_manager import QQBotManager
 from py.dify_openai_async import DifyOpenAIAsync
-# 如果是windows系统
-if os.name == 'nt':
-    from py.wx_bot_manager import WXBotManager
 
 from py.get_setting import load_settings,save_settings,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,USER_DATA_DIR,LOG_DIR
 from py.llm_tool import get_image_base64,get_image_media_type
