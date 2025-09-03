@@ -740,6 +740,7 @@ key3`,
         'selectFile': '选择文件',
         "parseFileContent": "解析文件内容",
         "clearText": "清空文本",
+        'ttsNotEnabled': '语音合成未启用',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1479,5 +1480,6 @@ Key3`,
         'selectFile': 'Select File',
         "parseFileContent": "Parse File Content",
         "clearText": "Clear Text",
+        'ttsNotEnabled': 'TTS is not enabled',
     }
   };

@@ -22,7 +22,7 @@
 
 - ✅ Seamless capability enhancement: It is possible to achieve an enterprise-level upgrade of the LLM API without code modification, seamlessly integrating knowledge bases, real-time networking, permanent memory, compatible SillyTavern Character Card, code execution, multimodal capabilities (vision/drawing/audition/speech), Automation capabilities (controlling smart homes, controlling browsers), deep thinking control and research, and other modular functions into the existing model interface, creating a pluggable LLM enhancement platform.
 
-- ✅ One-click deployment across all channels: It supports the rapid deployment of intelligent agents to multiple types of terminals, and is compatible with scenarios such as classic chat interfaces, WeChat/QQ official robots, Bilibili live interaction, and VRM virtual desktop pets, ready to use out of the box.
+- ✅ One-click deployment across all channels: It supports the rapid deployment of intelligent agents to multiple types of terminals, and is compatible with scenarios such as classic chat interfaces, QQ official robots, Bilibili live interaction, and VRM virtual desktop pets, ready to use out of the box.
 
 - ✅ Ecological tool interconnection: It can freely access third-party intelligent entities and workflows as a tool chain (already adapted to systems such as Dify/ComfyUI/MCP/A2A), and achieve cross-platform capability aggregation through the agent-party architecture.
 
@@ -114,9 +114,6 @@ We provide two mainstream Linux installation package formats for your convenienc
 
 ### Tavern Character Cards: Supports Tavern character cards with long-term memory capabilities.
 ![image](doc/image/card4.jpeg)
-
-### WeChat Bot: Non-intrusively takes control of your WeChat by simulating user operations, minimizing the risk of account restrictions.
-![image](doc/image/wxbot5.jpeg)
 
 ### QQ Bot: Supports one-click deployment to the official QQ bot platform, enabling users to access the agent anytime, anywhere.
 ![image](doc/image/qqbot6.jpeg)
