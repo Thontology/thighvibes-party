@@ -914,8 +914,22 @@ let vue_data = {
       { id: 'live_stream', title: 'live_stream_bot', icon: "fa-solid fa-video"},
       { id: 'qq_bot', title: 'qqBot', icon: 'fa-brands fa-qq' },
       { id: 'wx_bot', title: 'wxBot', icon: 'fa-brands fa-weixin' },
+      { id: 'read_bot', title: 'readBot', icon: "fa-solid fa-book-open-reader"}, 
       { id: 'bot_config', title: 'bot_config', icon: 'fa-solid fa-robot' }
     ],
+    readConfig: {
+      longText: "",
+    },
+    isReadStarting: false,
+    isReadStopping: false,
+    isReadRunning: false,
+    readState: {
+      ttsChunks: [],
+      audioChunks: [],
+      ttsQueue: new Set(),
+      currentChunk: 0,
+      isPlaying: false
+    },
     liveConfig: {
       onlyDanmaku: true,
       danmakuQueueLimit: 5,

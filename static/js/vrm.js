@@ -1352,23 +1352,20 @@ function startChunkAnimation(chunkId, chunkState) {
             
             // 处理其他表情
             if (expression) {
-                // 1. 将 happy 和 surprised 添加到 mouthExpressionNames（作为被覆盖者）
-                currentVrm.expressionManager.mouthExpressionNames = ['happy', 'surprised'];
+                // 1. 将 口型动画 添加到 mouthExpressionNames（作为被覆盖者）
+                currentVrm.expressionManager.mouthExpressionNames = ['aa'];
 
-                // 2. 为所有5个嘴型表情设置 overrideMouth 属性（作为覆盖者）
-                const mouthExpressions = ['aa', 'ih', 'ou', 'ee', 'oh'];
+                // 2. 为'happy', 'surprised'表情设置 overrideMouth 属性（作为覆盖者）
+                const mouthExpressions = ['happy', 'surprised'];
 
                 mouthExpressions.forEach(expressionName => {
                     const exp = currentVrm.expressionManager.getExpression(expressionName);
                     if (exp) {
-                        exp.overrideMouth = 'blend'; // 设置为 'blend' 以启用覆盖
+                        exp.overrideMouth = 'block'; 
                     }
                 });
-                if (['happy', 'angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
+                if (['surprised','happy','angry', 'sad', 'neutral', 'relaxed'].includes(expression)) {
                     currentVrm.expressionManager.setValue(expression, 1.0);
-                } else if (expression === 'surprised') {
-                    // 惊讶表情持续2秒 (30fps * 2)
-                    currentVrm.expressionManager.setValue(expression, frameCount < 60 ? 1.0 : 0.0);
                 } else if (['blink', 'blinkLeft', 'blinkRight'].includes(expression)) {
                     // 简单的眨眼动画，持续1秒
                     const progress = (frameCount % 30) / 30;
