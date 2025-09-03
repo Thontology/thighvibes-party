@@ -3028,6 +3028,11 @@ body {
   margin-top: 10px;
 }
 
+.add-server-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
 .no-server-tip {
   height: 300px;
   display: flex;

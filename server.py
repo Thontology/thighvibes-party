@@ -15,6 +15,8 @@ import httpx
 from scipy.io import wavfile
 import numpy as np
 import websockets
+
+from py.load_files import get_file_content
 # 在程序最开始设置
 if hasattr(sys, '_MEIPASS'):
     # 打包后的程序
@@ -5085,6 +5087,11 @@ async def update_storage_endpoint(request: Request):
     # 发给前端
     return JSONResponse(content={"textFiles": textFiles, "imageFiles": imageFiles, "videoFiles": videoFiles})
 
+@app.get("/get_file_content")
+async def get_file_content_endpoint(file_url: str):
+    file_path = os.path.join(UPLOAD_FILES_DIR, file_url)
+    content = await get_file_content(file_path)
+    return JSONResponse(content={"content": content})
 
 @app.post("/create_kb")
 async def create_kb_endpoint(request: Request, background_tasks: BackgroundTasks):

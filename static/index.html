@@ -6346,13 +6346,44 @@ if ('serviceWorker' in navigator) {
                         </div>
 
                         <div class="tool-item">
-                          <el-input
-                              v-model="readConfig.longText"
-                              type="textarea"
-                              :rows=32
-                              :placeholder="t('longTextPlaceholder')"
-                              class="input-box">
-                          </el-input>
+                          <div class="tool-content">
+                            <div class="upload-container">
+                              <!-- 可点击的拖拽区域 -->
+                              <div
+                                class="drop-zone"
+                                @dragover.prevent
+                                @drop.prevent="handleReadDrop"
+                                @click="browseReadFiles"
+                              >
+                                <el-icon :size="50"><upload /></el-icon>
+                                <p>{{ t('clickOrDrop') }}</p>
+                              </div>
+                            </div>
+                            <el-form-item>
+                              <!-- 选择textFiles中的文件 -->
+                              <el-select class="full-width-input" v-model="selectedFile" :placeholder="t('selectFile')">
+                                <el-option
+                                  v-for="file in textFiles"
+                                  :key="file.unique_filename"
+                                  :label="file.original_filename"
+                                  :value="file.unique_filename"
+                                ></el-option>
+                              </el-select>
+                            </el-form-item>
+                              <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                                <el-button type="primary" @click="parseSelectedFile" plain><i class="fa-solid fa-file-import"></i>{{t("parseFileContent")}}</el-button>
+                                <el-button type="danger" @click="clearLongText" plain><i class="fa-solid fa-broom"></i>{{t("clearText")}}</el-button>
+                              </div>
+                            <el-form-item>
+                              <el-input
+                                  v-model="readConfig.longText"
+                                  type="textarea"
+                                  :rows=32
+                                  :placeholder="t('longTextPlaceholder')"
+                                  class="input-box">
+                              </el-input>
+                            </el-form-item>
+                          </div>
                         </div>
                       </div>
                     </el-form>
