@@ -34,19 +34,19 @@
 
 ### windows桌面版安装
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.6/Super-Agent-Party-Setup-0.2.7.exe)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-Setup-0.2.8.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
 
 ### windows整合包（免安装源码版本）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.7/super-agent-party-v0.2.7.zip)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/super-agent-party-v0.2.8.zip)
 
 ⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
 
 ### MacOS桌面版安装
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.7/Super-Agent-Party-0.2.7-Mac.dmg)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-0.2.8-Mac.dmg)
 
 ⭐注意！下载后将dmg文件的app文件拖入`/Applications`目录下，然后打开终端，执行以下命令并输入root密码，从而移除从网络下载附加的Quarantine属性：
 
@@ -62,11 +62,11 @@
 
 `.AppImage` 是一种无需安装、即开即用的 Linux 应用格式。适用于大多数 Linux 发行版。
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.7/Super-Agent-Party-0.2.7-Linux.AppImage)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-0.2.8-Linux.AppImage)
 
 #### 2. 使用 `.deb` 包安装（适用于 Ubuntu / Debian 系统）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.7/Super-Agent-Party-0.2.7-Linux.deb)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-0.2.8-Linux.deb)
 
 ### docker部署（推荐）
 
