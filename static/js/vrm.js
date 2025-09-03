@@ -1381,7 +1381,7 @@ function startChunkAnimation(chunkId, chunkState) {
             const intensity = Math.min(average / 6, 1.0); // 40是敏感度系数，可调整
             if (intensity > 0.05) { // 阈值，防止背景噪音导致嘴动
                 const mouthOpen = Math.min(intensity * 1.5, max_mouthOpen);
-                currentVrm.expressionManager.setValue('aa', mouthOpen);
+                currentVrm.expressionManager.setValue('aa', mouthOpen); 
                 // 添加一些'ih'口型作为变化
                 const variation = Math.sin(frameCount * 0.2) * 0.1;
                 currentVrm.expressionManager.setValue('ih', Math.min(Math.max(0, mouthOpen * 0.5 + variation), max_mouthOpen));
