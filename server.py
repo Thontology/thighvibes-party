@@ -55,8 +55,14 @@ from py.dify_openai_async import DifyOpenAIAsync
 if os.name == 'nt':
     from py.wx_bot_manager import WXBotManager
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from py.get_setting import load_settings,save_settings,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,USER_DATA_DIR,LOG_DIR
+from py.llm_tool import get_image_base64,get_image_media_type
+
+timetamp = time.time()
+log_path = os.path.join(LOG_DIR, f"backend_{timetamp}.log")
+
+logger = None
+
 parser = argparse.ArgumentParser(description="Run the ASGI application server.")
 parser.add_argument("--host", default="127.0.0.1", help="Host for the ASGI server, default is 127.0.0.1")
 parser.add_argument("--port", type=int, default=3456, help="Port for the ASGI server, default is 3456")
@@ -92,9 +98,6 @@ ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
 
 ALLOWED_VIDEO_EXTENSIONS = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', '3gp', 'm4v']
 
-from py.get_setting import load_settings,save_settings,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,USER_DATA_DIR
-from py.llm_tool import get_image_base64,get_image_media_type
-
 
 configure_host_port(args.host, args.port)
 
@@ -103,6 +106,41 @@ async def lifespan(app: FastAPI):
     from py.get_setting import init_db
     await init_db()
     global settings, client, reasoner_client, mcp_client_list, local_timezone, logger, locales
+    # 创建带时间戳的日志文件路径
+    timestamp = time.time()
+    log_path = os.path.join(LOG_DIR, f"backend_{timestamp}.log")
+    
+    # 创建并配置logger
+    logger = logging.getLogger("app")
+    logger.setLevel(logging.INFO)
+    
+    # 创建文件处理器
+    file_handler = logging.FileHandler(log_path, mode='a')
+    file_handler.setLevel(logging.INFO)
+    
+    # 设置日志格式
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    file_handler.setFormatter(formatter)
+    
+    # 清除现有处理器（避免重复）
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    
+    # 添加文件处理器
+    logger.addHandler(file_handler)
+    
+    # 添加控制台处理器（可选）
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # 测试日志
+    logger.info("===== 日志系统初始化成功 =====")
+    logger.info(f"日志文件路径: {log_path}")
+
     with open(base_path + "/config/locales.json", "r", encoding="utf-8") as f:
         locales = json.load(f)
     from tzlocal import get_localzone
@@ -2305,6 +2343,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     print("知识库更新任务已提交")
                 return
             except Exception as e:
+                logger.error(f"Error occurred: {e}")
                 # 捕获异常并返回错误信息
                 error_chunk = {
                     "choices": [{
