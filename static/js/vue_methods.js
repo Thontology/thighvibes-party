@@ -6353,7 +6353,7 @@ let vue_methods = {
     /* ===============  朗读主流程  =============== */
   async startRead() {
     if (!this.ttsSettings.enabled) {
-      this.$message.warning(this.t('ttsNotEnabled'));
+      showNotification(this.t('ttsNotEnabled'), 'error')
       return;
     }
     if (!this.readConfig.longText.trim()) return;
