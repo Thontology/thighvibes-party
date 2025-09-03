@@ -1904,6 +1904,42 @@ let vue_methods = {
         }
       }
     },
+    // 文件选择处理方法
+    async browseReadFiles() {
+      if (!this.isElectron) {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.multiple = true
+        input.accept = ALLOWED_EXTENSIONS.map(ext => `.${ext}`).join(',')
+        
+        input.onchange = (e) => {
+          const files = Array.from(e.target.files)
+          const validFiles = files.filter(this.isValidFileType)
+          this.handleReadFiles(validFiles)
+        }
+        input.click()
+      } else {
+        const result = await window.electronAPI.openFileDialog();
+        if (!result.canceled) {
+          // 转换Electron文件路径为File对象
+          const files = await Promise.all(
+            result.filePaths
+              .filter(path => {
+                const ext = path.split('.').pop()?.toLowerCase() || '';
+                return ALLOWED_EXTENSIONS.includes(ext);
+              })
+              .map(async path => {
+                // 读取文件内容并转换为File对象
+                const buffer = await window.electronAPI.readFile(path);
+                const blob = new Blob([buffer]);
+                return new File([blob], path.split(/[\\/]/).pop());
+              })
+          );
+          this.handleReadFiles(files);
+        }
+      }
+    },
+
     // 文件验证方法
     isValidFileType(file) {
       if (this.currentUploadType === 'image') {
@@ -1937,6 +1973,65 @@ let vue_methods = {
         this.showErrorAlert(this.currentUploadType);
       }
     },
+    // 统一处理文件
+    async handleReadFiles(files) {
+      const allowedExtensions = this.currentUploadType === 'image' ? ALLOWED_IMAGE_EXTENSIONS : ALLOWED_EXTENSIONS;
+
+      const validFiles = files.filter(file => {
+        try {
+          // 安全获取文件扩展名
+          const filename = file.name || (file.path && file.path.split(/[\\/]/).pop()) || '';
+          const ext = filename.split('.').pop()?.toLowerCase() || '';
+          return allowedExtensions.includes(ext);
+        } catch (e) {
+          console.error('文件处理错误:', e);
+          return false;
+        }
+      });
+
+      if (validFiles.length > 0) {
+        const formData = new FormData();
+
+        for (const file of validFiles) {
+          formData.append('files', file, file.name);
+        }
+
+        try {
+          console.log('Uploading files...');
+          const response = await fetch(`/load_file`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server responded with an error:', errorText);
+            showNotification(this.t('file_upload_failed'), 'error');
+            return;
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            // 更新文件链接和文本文件
+            this.files = data.fileLinks;
+            
+            // 将新的文件信息添加到 this.textFiles
+            this.textFiles = [...data.textFiles,...this.textFiles];
+            this.autoSaveSettings();
+          } else {
+            showNotification(this.t('file_upload_failed'), 'error');
+          }
+        } catch (error) {
+          console.error('Error during file upload:', error);
+          showNotification(this.t('file_upload_failed'), 'error');
+        }
+      } else {
+        this.showErrorAlert(this.currentUploadType);
+      }
+    },
+    clearLongText() {
+      this.readConfig.longText = '';
+    },
     removeItem(index, type) {
       if (type === 'file') {
         this.files.splice(index, 1);
@@ -1960,6 +2055,13 @@ let vue_methods = {
       const files = Array.from(event.dataTransfer.files)
         .filter(this.isValidFileType)
       this.handleFiles(files)
+    },
+        // 拖放处理
+    handleReadDrop(event) {
+      event.preventDefault()
+      const files = Array.from(event.dataTransfer.files)
+        .filter(this.isValidFileType)
+      this.handleReadFiles(files)
     },
     switchToApiBox() {
       // 切换到 API 钥匙箱界面
@@ -6448,4 +6550,26 @@ let vue_methods = {
       setTimeout(() => this.checkReadAudioPlayback(), 0);
     }
   },
+    async parseSelectedFile() {
+        // 根据选择的文件unique_filename在textFiles中查找对应的文件信息
+        const selectedFile = this.textFiles.find(file => file.unique_filename === this.selectedFile);
+        try {
+          if (selectedFile) {
+            // 构建完整的请求URL
+            const url = `/get_file_content?file_url=${selectedFile.unique_filename}`;
+            
+            // 发送请求获取文件内容
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            this.readConfig.longText = data.content;
+          }
+        }
+        catch (error) {
+          console.error('Error:', error);
+        }
+    },
+
 }

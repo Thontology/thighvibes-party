@@ -920,6 +920,7 @@ let vue_data = {
     readConfig: {
       longText: "",
     },
+    selectedFile: null,
     isReadStarting: false,
     isReadStopping: false,
     isReadRunning: false,
